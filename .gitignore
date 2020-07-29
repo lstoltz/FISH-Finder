@@ -1,1 +1,4 @@
 env/
+inbox
+outbox
+flagged
