@@ -3,3 +3,6 @@ flagged/
 inbox/
 outbox/
 .env
+*.csv
+*.lid
+*.gps
