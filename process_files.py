@@ -97,10 +97,9 @@ def moveFiles(filePath):
 #         os.rename(file, dataFlagged + os.path.sep + folderStructure[-2] + os.path.sep + filename)
 
 
-def getLoggerNumber(filename):
+def getLoggerNumber(fileName):
     global loggerNumber
-
-    loggerNumber = filename[:7]
+    loggerNumber = fileName[:7]
 
 def cleanUpEmptyDir(macFolders):
     if (len(os.listdir(macFolders)) == 0):
