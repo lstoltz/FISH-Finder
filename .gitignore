@@ -1,7 +1,7 @@
 env/
 flagged/
-inbox/
-outbox/
+inbox/*
+outbox/*
 .env
 *.csv
 *.lid
