@@ -1,12 +1,21 @@
 import tkinter as tk
 from tkinter import Tk, Label, Button, filedialog, StringVar
 import pandas as pd
-import process_files as pf
-import os, fnmatch
+import os, fnmatch, ntpath
 from process_files import dataSource, tempThreshold
-from fish_finder_util import loggerNumber
 
-                
+def getLoggerNumber():
+    loggerNumber = None
+    loggers = []
+
+    for path, subdirs, files in os.walk(dataSource):
+        for file in files:
+
+            if file.endswith(".csv"):
+                loggers.append(file[:7])
+                loggerNumber = list(set(loggers))      
+
+    return loggerNumber
                 
 def cleanBadData(files):
     df = pd.read_csv(files)
@@ -22,7 +31,7 @@ def applyCalibration(files):
     
                  
 class FishFinder:
-    LOGGER_TEXT = loggerNumber
+    LOGGER_TEXT = getLoggerNumber()
 
     def __init__(self,master):
         self.master = master
@@ -32,6 +41,12 @@ class FishFinder:
         self.currentLoggerIndex = 0
         self.currentLoggerLabel = StringVar() 
         self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
+
+        self.listBox = tk.Listbox(master, width=30)
+        for file in self.getFiles():
+            print("file:" + file)
+            self.listBox.insert(tk.END, ntpath.basename(file))
+        self.listBox.place(relx = 0.6, rely = 0.2)
 
         self.loggerLabel = Label(master, textvariable=self.currentLoggerLabel, font = ('helvetica', 12, 'bold'))
         self.loggerLabel.place(relx = 0.2, rely = 0.7)
@@ -81,6 +96,22 @@ class FishFinder:
                         cleanBadData(files)
                     # currentLogger = list(filter(None, currentLogger))   
 
+    def getFiles(self): 
+        global currentLogger, loggerValue
+        loggerValue = self.currentLoggerLabel.get()
+        for files in os.listdir(dataSource):
+            macFolders = os.path.join(dataSource, files)
+
+            csvFiles = []
+            for file in os.listdir(macFolders):
+                filePath = os.path.join(macFolders, file)
+                fileName, fileExtension = os.path.splitext(filePath)
+
+                if (fileExtension == ".csv"):
+                    csvFiles.append(filePath)
+            
+            print(csvFiles)
+            return csvFiles
 
         
     def calButtonCallback(self):
