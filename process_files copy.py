@@ -11,7 +11,17 @@ dataFlagged = r'C:\Users\lstol\Documents\Repositories\clean-data\flagged'
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 
 def findFiles():
-    global dataSource, fileName, filePath, macFolders
+    global dataSource
+
+#     files = []
+# # r=root, d=directories, f = filePath
+#     for r, d, f in os.walk(dataSource):
+#         for file in f:
+#             files.append(os.path.join(r, file))
+
+#     for f in files:
+#         moveFiles(f)
+
     
     for files in os.listdir(dataSource):
         macFolders = os.path.join(dataSource, files)
@@ -22,8 +32,8 @@ def findFiles():
 
         # checkLocation(fileName, macFolders)
             processCSV(macFolders)
-            #moveFiles(filePath)
-           # cleanUpEmptyDir(macFolders)
+            moveFiles(filePath)
+            cleanUpEmptyDir(macFolders)
 
 # def checkLocation(fileName, macFolders):
 #     global gpsFilePath, lidFilePath, csvFilePath
@@ -57,6 +67,7 @@ def processCSV(macFolders):
         #     pass
 
         if (fileExtension == ".csv"):
+            getLoggerNumber(os.path.basename(fileName))
             cleanData(filePath) 
 
 def cleanData(filePath):  
@@ -83,19 +94,9 @@ def moveFiles(filePath):
 #         os.rename(file, dataFlagged + os.path.sep + folderStructure[-2] + os.path.sep + filename)
 
 
-def getLoggerNumber():
+def getLoggerNumber(fileName):
     global loggerNumber
-    loggerNumber = []
-    for file in os.listdir(macFolders):
-        filePath = os.path.join(macFolders, file)
-        fileName, fileExtension = os.path.splitext(filePath)
-        
-        if (fileExtension == ".csv"):
-            cleanData(filePath) 
-            fileName, fileExtension = os.path.splitext(filePath)
-            #loggerNumber.append(fi)
-            loggerNumber.append(fileName[-27:-20])
-            
+    loggerNumber = fileName[:7]
 
 def cleanUpEmptyDir(macFolders):
     if (len(os.listdir(macFolders)) == 0):
@@ -103,7 +104,6 @@ def cleanUpEmptyDir(macFolders):
 
 def main():
     findFiles()
-    getLoggerNumber()
-    
+
 main()
 
