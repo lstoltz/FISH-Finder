@@ -2,47 +2,25 @@ import tkinter as tk
 from tkinter import Tk, Label, Button, filedialog, StringVar
 import pandas as pd
 import process_files as pf
-import os
-import glob
-import fnmatch
-from process_files import dataSource, filePath, tempThreshold
+import os, fnmatch
+from process_files import dataSource, tempThreshold
 from fish_finder_util import loggerNumber
 
-
-def findFiles():
-    global dataSource, fileName, filePath, macFolders
-    
-    for files in os.listdir(dataSource):
-        macFolders = os.path.join(dataSource, files)
-
-        for file in os.listdir(macFolders):
-            filePath = os.path.join(macFolders, file)
-            fileName, fileExtension = os.path.splitext(filePath)
-
-            if (fileExtension == ".csv"):
-                csvFiles = fileName
-                cleanBadData()
-                selectDataFiles(csvFiles)
                 
                 
-def cleanBadData():
-    df = pd.read_csv(filePath)
+def cleanBadData(files):
+    df = pd.read_csv(files)
     df = df.drop(df[df['DO Temperature (C)'] > tempThreshold].index)
     df = df.drop(df.head(2).index)
     df = df.drop(df.tail(2).index)
-    df.to_csv(filePath, index = False)
+    df.to_csv(files, index = False)
+    print("it worked")
 
-
-# def selectDataFiles(csvFiles):
-#     for logger in loggerNumber:
-        
-#         if logger in csvFiles:
-#             pass
-#            # print(csvFiles)
-        
-                
-            
-          
+def applyCalibration(files):
+    # add 3 point calibration from two dataframes
+    pass
+    
+                 
 class FishFinder:
     LOGGER_TEXT = loggerNumber
 
@@ -55,12 +33,9 @@ class FishFinder:
         self.currentLoggerLabel = StringVar() 
         self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
 
-        #print(loggerValue)
         self.loggerLabel = Label(master, textvariable=self.currentLoggerLabel, font = ('helvetica', 12, 'bold'))
         self.loggerLabel.place(relx = 0.2, rely = 0.7)
         
-        
-
         self.browseButton_preCsv = tk.Button(master,text="      Select pre-deployment cal file     ", command=self.getPreCsv, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
         self.browseButton_preCsv.place(relx = 0.08, rely = 0.1)        
 
@@ -86,20 +61,10 @@ class FishFinder:
     def cycleLoggerText(self):
         self.currentLoggerIndex += 1
         self.currentLoggerIndex %= len(self.LOGGER_TEXT) # wrap around
-        self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])        
+        self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])     
 
     def calDataFiles(self):
-        self.getCurrentLogger()
-        
-    def calButtonCallback(self):
-        self.calDataFiles()
-        self.cycleLoggerText()
-
-    def clientExit(self):
-        exit()
-
-    def getCurrentLogger(self):
-        global currentLogger
+        global currentLogger, loggerValue
         loggerValue = self.currentLoggerLabel.get()
         for files in os.listdir(dataSource):
             macFolders = os.path.join(dataSource, files)
@@ -111,8 +76,19 @@ class FishFinder:
                 if (fileExtension == ".csv"):
                     csvFiles = [filePath]
                     currentLogger = fnmatch.filter(csvFiles, str('*'+loggerValue+'*'))
-                    currentLogger = list(filter(None, currentLogger))
-                    print(currentLogger)
+                    #print(currentLogger)
+                    for files in currentLogger:
+                        cleanBadData(files)
+                    # currentLogger = list(filter(None, currentLogger))   
+
+
+        
+    def calButtonCallback(self):
+        self.calDataFiles()
+        self.cycleLoggerText()
+
+    def clientExit(self):
+        exit()
 
 root = Tk()
 def task():

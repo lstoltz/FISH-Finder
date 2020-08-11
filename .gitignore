@@ -1,7 +1,7 @@
 env/
-flagged/
-inbox/
-outbox/
+flagged/*
+inbox/*
+outbox/*
 .env
 *.csv
 *.lid
