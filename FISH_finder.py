@@ -12,9 +12,9 @@ def getLoggerNumber():
 
             if file.endswith(".csv"):
                 loggers.append(file[:7])
-                loggerNumber = list(set(loggers)
-                )
-    return loggerNumber                
+                loggerNumber = list(set(loggers))      
+
+    return loggerNumber
                 
 def cleanBadData(files):
     df = pd.read_csv(files)
@@ -40,6 +40,12 @@ class FishFinder:
         self.currentLoggerIndex = 0
         self.currentLoggerLabel = StringVar() 
         self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
+
+        self.listBox = tk.Listbox(master, width=30)
+        for file in self.getFiles():
+            print("file:" + file)
+            self.listBox.insert(tk.END, ntpath.basename(file))
+        self.listBox.place(relx = 0.6, rely = 0.2)
 
         self.loggerLabel = Label(master, textvariable=self.currentLoggerLabel, font = ('helvetica', 12, 'bold'))
         self.loggerLabel.pack()
@@ -125,7 +131,6 @@ class FishFinder:
 
                 
         return csvFiles
-
 
         
     def calButtonCallback(self):
