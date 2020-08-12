@@ -5,7 +5,6 @@ import os, fnmatch, ntpath
 from process_files import dataSource, tempThreshold
 
 def getLoggerNumber():
-    loggerNumber = None
     loggers = []
 
     for path, subdirs, files in os.walk(dataSource):
@@ -28,7 +27,7 @@ def cleanBadData(files):
 def applyCalibration(files):
     # add 3 point calibration from two dataframes
     pass
-    
+
                  
 class FishFinder:
     LOGGER_TEXT = getLoggerNumber()
@@ -37,7 +36,7 @@ class FishFinder:
         self.master = master
         master.title("FISH Finder")
         self.snLabel = Label(master, text = "Logger SN that is being calibrated:", font = ('helvetica', 12))
-        self.snLabel.place(relx = 0.12, rely = 0.5)
+        self.snLabel.place(relx = 0.12, rely = 0.7)
         self.currentLoggerIndex = 0
         self.currentLoggerLabel = StringVar() 
         self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
@@ -49,13 +48,29 @@ class FishFinder:
         self.listBox.place(relx = 0.6, rely = 0.2)
 
         self.loggerLabel = Label(master, textvariable=self.currentLoggerLabel, font = ('helvetica', 12, 'bold'))
-        self.loggerLabel.place(relx = 0.2, rely = 0.7)
-        
-        self.browseButton_preCsv = tk.Button(master,text="      Select pre-deployment cal file     ", command=self.getPreCsv, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
-        self.browseButton_preCsv.place(relx = 0.08, rely = 0.1)        
+        self.loggerLabel.pack()
+        self.loggerLabel.place(relx = 0.2, rely = 0.8)
 
+        self.listBox = tk.Listbox(master, width=40, height=15)
+        for file in self.getFiles():
+            print("file:" + file)
+            self.listBox.insert(tk.END, ntpath.basename(file))
+        self.listBox.place(relx = 0.6, rely = 0.1)
+
+        self.listBoxLabel = tk.Label(master, fg = "black", text = "Files to be Processed", font =('helvetica', 12, 'bold') )
+        self.listBoxLabel.place(relx = 0.6, rely = 0.05)
+
+        self.preCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12) )  
+        self.preCsvLabel.place(relx = 0.08, rely = 0.2) 
+        self.browseButton_preCsv = tk.Button(master,text="      Select pre-deployment cal file     ", command=self.getPreCsv, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
+        self.browseButton_preCsv.place(relx = 0.08, rely = 0.1)
+ 
+          
+        self.postCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12)) 
+        self.postCsvLabel.place(relx = 0.08, rely = 0.48)
         self.browseButton_postCsv = tk.Button(master,text="     Select post-deployment cal file     ", command=self.getPostCsv, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
-        self.browseButton_postCsv.place(relx = 0.08, rely = 0.3)
+        self.browseButton_postCsv.place(relx = 0.08, rely = 0.37)
+ 
         
         self.calButton = tk.Button(master,text="     Calibrate!     ", command=self.calButtonCallback, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
         self.calButton.place(relx = 0.7, rely = 0.7)
@@ -64,12 +79,14 @@ class FishFinder:
     def getPreCsv(self):
         global df_pre
         import_file_path = filedialog.askopenfilename()
+        self.preCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
         df_pre = pd.read_csv (import_file_path)
         print (df_pre)
     
     def getPostCsv(self):
         global df_post
         import_file_path = filedialog.askopenfilename()
+        self.postCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
         df_post = pd.read_csv (import_file_path)
         print (df_post)
     
@@ -99,19 +116,21 @@ class FishFinder:
     def getFiles(self): 
         global currentLogger, loggerValue
         loggerValue = self.currentLoggerLabel.get()
-        for files in os.listdir(dataSource):
-            macFolders = os.path.join(dataSource, files)
+        # for files in os.listdir(dataSource):
+        #     macFolders = os.path.join(dataSource, files)
 
-            csvFiles = []
-            for file in os.listdir(macFolders):
-                filePath = os.path.join(macFolders, file)
-                fileName, fileExtension = os.path.splitext(filePath)
+        csvFiles = []
+        #     for file in os.listdir(macFolders):
+        #         filePath = os.path.join(macFolders, file)
+        #         fileName, fileExtension = os.path.splitext(filePath)
+        for path, subdirs, files in os.walk(dataSource):
+            for file in files:
 
-                if (fileExtension == ".csv"):
-                    csvFiles.append(filePath)
-            
-            print(csvFiles)
-            return csvFiles
+                if file.endswith(".csv"):
+                    csvFiles.append(file)
+
+                
+        return csvFiles
 
         
     def calButtonCallback(self):
@@ -128,7 +147,7 @@ def task():
     #calCsvFiles()
     print("hello")  # pt. 1: lets function be run alongside GUI in mainloop
 
-root.geometry("850x500")
+root.geometry("1200x700")
 CalibrationProgram = FishFinder(root)
 
 #root.after(2000, task) # pt. 2 

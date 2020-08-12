@@ -6,4 +6,6 @@ outbox/*
 *.csv
 *.lid
 *.gps
-__pycache__
+__pycache__/
+
+

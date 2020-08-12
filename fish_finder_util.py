@@ -5,7 +5,6 @@ from process_files import tempThreshold
 
 
 def getLoggerNumber():
-    global loggerNumber
     loggers = []
 
     for path, subdirs, files in os.walk(dataSource):
@@ -14,6 +13,7 @@ def getLoggerNumber():
             if file.endswith(".csv"):
                 loggers.append(file[:7])
                 loggerNumber = list(set(loggers))
+        return loggerNumber
 
 # def findFiles():
 #     global dataSource, fileName, filePath, macFolders
