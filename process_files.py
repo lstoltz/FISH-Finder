@@ -5,7 +5,7 @@ import os, ntpath, re
 from pathlib import Path
 import shutil
 
-dataSource = r'/Users/maxwell.falcon/Documents/dev/clean-data/inbox'
+dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'
 dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'
 dataFlagged = r'C:\Users\lstol\Documents\Repositories\clean-data\flagged'
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)

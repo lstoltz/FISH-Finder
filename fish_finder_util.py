@@ -13,7 +13,8 @@ def getLoggerNumber():
             if file.endswith(".csv"):
                 loggers.append(file[:7])
                 loggerNumber = list(set(loggers))
-        return loggerNumber
+                
+    return loggerNumber
 
 # def findFiles():
 #     global dataSource, fileName, filePath, macFolders
