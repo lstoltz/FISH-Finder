@@ -2,9 +2,12 @@ import tkinter as tk
 from tkinter import Tk, Label, Button, filedialog, StringVar
 import pandas as pd
 import os, fnmatch, ntpath, shutil
-from process_files import tempThreshold, dataSource, dataDestination
 from pathlib import Path
 
+dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'
+dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'  # temporary variables, when shipping final product delete and rely on UI
+dataFlagged = r'C:\Users\lstol\Documents\Repositories\clean-data\flagged'
+tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 
 def getLoggerNumber():
     loggers = []
