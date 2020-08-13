@@ -2,10 +2,12 @@ env/
 flagged/*
 inbox/*
 outbox/*
-
 *.csv
 *.lid
 *.gps
 __pycache__/
-
+build/
+dist/
+FISH_finder.spec
+merman.ico
 

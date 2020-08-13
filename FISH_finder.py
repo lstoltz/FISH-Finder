@@ -176,10 +176,14 @@ class SecondPage(tk.Frame):
     
     def getPostCsv(self):
         global df_post
+        # try:
         import_file_path = filedialog.askopenfilename()
         self.postCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
         df_post = pd.read_csv (import_file_path)
         print (df_post)
+        # except FileNotFoundError:
+        #     self.postCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12))
+        #     self.postCsvLabel.place(relx = 0.08, rely = 0.48)
     
     def cycleLoggerText(self):
         try:
@@ -247,6 +251,7 @@ class SecondPage(tk.Frame):
         cleanUpEmptyDir(macFolders)
         
     def clientExit(self):
+        
         exit()
 
 #dataSource = dataSource
