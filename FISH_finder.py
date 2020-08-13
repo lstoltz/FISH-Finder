@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import Tk, Label, Button, filedialog, StringVar
 import pandas as pd
-import os, fnmatch, ntpath
-from process_files import dataSource, tempThreshold, dataDestination
+import os, fnmatch, ntpath, shutil
+from process_files import tempThreshold, dataSource, dataDestination
 from pathlib import Path
+
 
 def getLoggerNumber():
     loggers = []
@@ -24,7 +25,7 @@ def cleanBadData(files):
     df = df.drop(df.head(2).index)
     df = df.drop(df.tail(2).index)
     df.to_csv(files, index = False)
-    #print("it worked")
+    print("it worked")
 
 def applyCalibration(files):
     # add 3 point calibration from two dataframes
@@ -50,27 +51,91 @@ def getListOfFiles(dataSource):
 def cleanUpEmptyDir(macFolders):
     if (len(os.listdir(macFolders)) == 0):
         os.rmdir(macFolders)
-class FishFinder(tk.Tk):
-    LOGGER_TEXT = getLoggerNumber()
+
+
+
+class StartPage(tk.Frame):
+
+    def __init__(self, parent):
+        self.parent = parent
+        parent.title("FISH Finder")
+
+        self.info = """Welcome to FISH Finder! 
+
+        This program applies pre and post deployment calibration curves to data loggers and removes values out of range for Oregon.
+        
+        To proceed, please select the folder where data files are nested within
+        their MAC address folders as well as a destination for calibrated files."""
+
+        self.creator = """Created by Linus Stoltz"""
+
+        self.dataSourceButton = tk.Button(parent, text="      Select Data Source     ", command=self.getDataSource, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
+        self.dataSourceButton.place(relx= 0.1, rely = 0.29)
+
+        self.dataSourceLabel = tk.Label(parent, fg="red", text="No folder selected.", font =('helvetica', 12) )
+        self.dataSourceLabel.place(relx = 0.05, rely = 0.4)
+
+        self.dataDestButton = tk.Button(parent, text="      Select Data Destination     ", command=self.getDataDest, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
+        self.dataDestButton.place(relx= 0.6, rely = 0.3)
+
+        self.dataDestLabel = tk.Label(parent, fg="red", text="No folder selected.", font =('helvetica', 12) )
+        self.dataDestLabel.place(relx = 0.5, rely = 0.4)
+        
+        self.infoText = tk.Label(parent, text = self.info, font = ('helvetica', 11))
+        # self.infoText.insert(tk.END, self.info)
+        self.infoText.place(relx = 0.05, rely = 0.05)
+
+        self.creatorText = tk.Label(parent, text = self.creator, font = ('helvetica', 11))
+        # self.infoText.insert(tk.END, self.info)
+        self.creatorText.place(relx = 0.05, rely = 0.9)
+
+
+        self.errorLabel = tk.Label(parent, fg="red", text="Error: please select a data source and desination!", font =('helvetica', 12, 'bold') )
+
+        self.nextPageButton = tk.Button(parent, text="      Next!     ", command=self.nextPage, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
+        self.nextPageButton.place(relx= 0.67, rely = 0.7)
+
+    def getDataSource(self):
+        global dataSource
+        dataSource = filedialog.askdirectory()
+        self.dataSourceLabel.config(text=dataSource, fg = "black", font =('helvetica', 12))
+
+    def getDataDest(self):
+        global dataDestination
+        dataDestination = filedialog.askdirectory()
+        self.dataDestLabel.config(text=dataDestination, fg = "black", font =('helvetica', 12))
+    
+    def nextPage(self):
+        if os.path.exists(dataSource) and os.path.exists(dataDestination):
+            self.dataSourceButton.place_forget()
+            self.dataDestButton.place_forget()
+            self.nextPageButton.place_forget()
+            self.dataSourceLabel.place_forget()
+            self.dataDestLabel.place_forget()
+            self.errorLabel.place_forget()
+            self.infoText.place_forget()
+            self.creatorText.place_forget()
+            CalibrationProgram = SecondPage(root)
+
+        else:
+            self.errorLabel.place(relx= 0.04, rely = 0.5)
+        
+class SecondPage(tk.Frame):
 
     def __init__(self,master):
         self.master = master
         master.title("FISH Finder")
-       # self.startUpWindow = tk.Toplevel(master)
-       # self.dataSource = tk.Button(master,text="      Select pre-deployment cal file     ", command=self.getPreCsv, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
 
-
-
-
+        self.LOGGER_TEXT = getLoggerNumber()
         self.snLabel = Label(master, text = "Logger SN that is being calibrated:", font = ('helvetica', 12))
         self.snLabel.place(relx = 0.12, rely = 0.7)
         self.currentLoggerIndex = 0
-        self.currentLoggerLabel = StringVar() 
+        self.currentLoggerLabel = StringVar()
         self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
 
-
+        self.loggersDoneLabel = tk.Label(master, text = "All loggers successfully calibrated! Please close this window", fg = 'green', font = ('helvetica', 12, 'bold'))
+        
         self.loggerLabel = Label(master, textvariable=self.currentLoggerLabel, font = ('helvetica', 12, 'bold'))
-        self.loggerLabel.pack()
         self.loggerLabel.place(relx = 0.2, rely = 0.8)
 
         self.listBox = tk.Listbox(master, width=40, height=15)
@@ -113,16 +178,22 @@ class FishFinder(tk.Tk):
         print (df_post)
     
     def cycleLoggerText(self):
-        self.currentLoggerIndex += 1
-        self.currentLoggerIndex %= len(self.LOGGER_TEXT) # wrap around
-        self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])     
+        try:
+            self.currentLoggerIndex += 1
+            #self.currentLoggerIndex %= len(self.LOGGER_TEXT) # wrap around
+            self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
+                
+        except IndexError:
+            self.loggerLabel.place_forget()
+            self.snLabel.place_forget() 
+            self.loggersDoneLabel.place(relx = 0.1, rely = 0.8)
+              
 
     def calDataFiles(self):
-        global currentLogger, loggerValue
+        global currentLogger, loggerValue, macFolders
         loggerValue = self.currentLoggerLabel.get()
         for files in os.listdir(dataSource):
             macFolders = os.path.join(dataSource, files)
-
             for file in os.listdir(macFolders):
                 filePath = os.path.join(macFolders, file)
                 fileName, fileExtension = os.path.splitext(filePath)
@@ -130,30 +201,27 @@ class FishFinder(tk.Tk):
                 if (fileExtension == ".csv"):
                     csvFiles = [filePath]
                     currentLogger = fnmatch.filter(csvFiles, str('*'+loggerValue+'*'))
-                    #print(currentLogger)
                     for files in currentLogger:
+                        
                         cleanBadData(files)
                         applyCalibration(files)
-                        self.moveFiles()
-                        #print(files)
-                    # currentLogger = list(filter(None, currentLogger))   
+                    # for files in currentLogger:        
+                    #     self.moveFiles(macFolders)
+  
                     
     def moveFiles(self):
         loggerValue = self.currentLoggerLabel.get()
         listOfFiles = getListOfFiles(dataSource)
-        # for path, subdirs, files in os.walk(dataSource):
-        # for file in filePath:
-        #     print(filePath)
-        for files in listOfFiles:
-            #print(files)
-            filesToMove = fnmatch.filter(files, str('*'+loggerValue+'*'))
-            for file in filesToMove:
-
+        fileQueue = []      
+        fileQueue.append(fnmatch.filter(listOfFiles, str('*'+loggerValue+'*')))
+        for files in fileQueue:
+            for file in files:
                 filename = ntpath.basename(file)
-                folderStructure = files.split(os.path.sep)
+                folderStructure = file.split(os.path.sep)
                 Path(dataDestination + os.path.sep + folderStructure[-2] + os.path.sep).mkdir(parents=True, exist_ok=True)
-                os.rename(file, dataDestination + os.path.sep + folderStructure[-2] + os.path.sep + filename)   
-                #print(folderStructure)
+                os.rename(file, dataDestination + os.path.sep + folderStructure[-2] + os.path.sep + filename)  
+        #cleanUpEmptyDir(macFolders) 
+        self.listBox.update()
 
     def getFiles(self): 
         global currentLogger, loggerValue
@@ -168,24 +236,20 @@ class FishFinder(tk.Tk):
 
         return csvFiles
     
-        
     def calButtonCallback(self):
         self.calDataFiles()
         self.cycleLoggerText()
+        #self.moveFiles()
+        cleanUpEmptyDir(macFolders)
         
-
     def clientExit(self):
         exit()
 
+dataSource = dataSource
 root = Tk()
-def task():
-    #findFiles()
-    #print(loggerNumber)
-    #calCsvFiles()
-    print("hello")  # pt. 1: lets function be run alongside GUI in mainloop
-
 root.geometry("1200x700")
-CalibrationProgram = FishFinder(root)
 
-#root.after(2000, task) # pt. 2 
+# StartUpScreen = SecondPage(root)
+FishFinder = StartPage(root)
+
 root.mainloop()
