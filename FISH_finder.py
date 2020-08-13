@@ -4,10 +4,10 @@ import pandas as pd
 import os, fnmatch, ntpath, shutil
 from pathlib import Path
 
-dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'
-dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'  # temporary variables, when shipping final product delete and rely on UI
-dataFlagged = r'C:\Users\lstol\Documents\Repositories\clean-data\flagged'
-tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
+# dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'
+# dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'  # temporary variables, when shipping final product delete and rely on UI
+# dataFlagged = r'C:\Users\lstol\Documents\Repositories\clean-data\flagged'
+# tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 
 def getLoggerNumber():
     loggers = []
@@ -109,18 +109,19 @@ class StartPage(tk.Frame):
         self.dataDestLabel.config(text=dataDestination, fg = "black", font =('helvetica', 12))
     
     def nextPage(self):
-        if os.path.exists(dataSource) and os.path.exists(dataDestination):
-            self.dataSourceButton.place_forget()
-            self.dataDestButton.place_forget()
-            self.nextPageButton.place_forget()
-            self.dataSourceLabel.place_forget()
-            self.dataDestLabel.place_forget()
-            self.errorLabel.place_forget()
-            self.infoText.place_forget()
-            self.creatorText.place_forget()
-            CalibrationProgram = SecondPage(root)
+        try:
+            if os.path.exists(dataSource) and os.path.exists(dataDestination):
+                self.dataSourceButton.place_forget()
+                self.dataDestButton.place_forget()
+                self.nextPageButton.place_forget()
+                self.dataSourceLabel.place_forget()
+                self.dataDestLabel.place_forget()
+                self.errorLabel.place_forget()
+                self.infoText.place_forget()
+                self.creatorText.place_forget()
+                CalibrationProgram = SecondPage(root)
 
-        else:
+        except NameError:
             self.errorLabel.place(relx= 0.04, rely = 0.5)
         
 class SecondPage(tk.Frame):
@@ -248,7 +249,7 @@ class SecondPage(tk.Frame):
     def clientExit(self):
         exit()
 
-dataSource = dataSource
+#dataSource = dataSource
 root = Tk()
 root.geometry("1200x700")
 
