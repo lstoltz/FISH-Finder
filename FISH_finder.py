@@ -52,8 +52,11 @@ def getListOfFiles(dataSource):
     return allFiles
                 
 def cleanUpEmptyDir(macFolders):
-    if (len(os.listdir(macFolders)) == 0):
-        os.rmdir(macFolders)
+    try:
+        if (len(os.listdir(macFolders)) == 0):
+            os.rmdir(macFolders)
+    except FileNotFoundError:
+        pass
 
 
 
@@ -101,12 +104,18 @@ class StartPage(tk.Frame):
     def getDataSource(self):
         global dataSource
         dataSource = filedialog.askdirectory()
-        self.dataSourceLabel.config(text=dataSource, fg = "black", font =('helvetica', 12))
+        if dataSource == "":
+            pass
+        else:
+            self.dataSourceLabel.config(text=dataSource, fg = "black", font =('helvetica', 12))
 
     def getDataDest(self):
         global dataDestination
         dataDestination = filedialog.askdirectory()
-        self.dataDestLabel.config(text=dataDestination, fg = "black", font =('helvetica', 12))
+        if dataDestination == "":
+            pass
+        else:
+            self.dataDestLabel.config(text=dataDestination, fg = "black", font =('helvetica', 12))
     
     def nextPage(self):
         try:
@@ -130,12 +139,16 @@ class SecondPage(tk.Frame):
         self.master = master
         master.title("FISH Finder")
 
-        self.LOGGER_TEXT = getLoggerNumber()
+        self.LOGGER_TEXT = self.getLoggerNumber()
         self.snLabel = Label(master, text = "Logger SN that is being calibrated:", font = ('helvetica', 12))
         self.snLabel.place(relx = 0.12, rely = 0.7)
         self.currentLoggerIndex = 0
         self.currentLoggerLabel = StringVar()
-        self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
+
+        self.fatalErrMsg = """Error: Data source folder contains no data, or has a folder structure not supported by this program. 
+        Don't panic, close the program, check the folder, and try again!"""
+
+        self.emptyInboxErrorlabel = Label(master, text = self.fatalErrMsg, fg = 'red', font = ('helvetica', 12, 'bold'))
 
         self.loggersDoneLabel = tk.Label(master, text = "All loggers successfully calibrated! Please close this window", fg = 'green', font = ('helvetica', 12, 'bold'))
         
@@ -166,24 +179,54 @@ class SecondPage(tk.Frame):
         self.calButton = tk.Button(master,text="     Calibrate!     ", command=self.calButtonCallback, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
         self.calButton.place(relx = 0.7, rely = 0.7)
 
+        try:
+            self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
+        except IndexError:
+            self.emptyInboxErrorlabel.place(relx = 0.1, rely = 0.5)
+            self.listBox.place_forget()
+            self.postCsvLabel.place_forget()
+            self.listBoxLabel.place_forget()
+            self.preCsvLabel.place_forget()
+            self.browseButton_postCsv.place_forget()
+            self.browseButton_preCsv.place_forget()
+            self.snLabel.place_forget()
+            self.calButton.place_forget()
+
 
     def getPreCsv(self):
         global df_pre
         import_file_path = filedialog.askopenfilename()
-        self.preCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
-        df_pre = pd.read_csv (import_file_path)
-        print (df_pre)
+        if import_file_path == "":
+            pass
+        else:
+            self.preCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
+            df_pre = pd.read_csv (import_file_path)
+            print (df_pre)
     
     def getPostCsv(self):
         global df_post
         # try:
         import_file_path = filedialog.askopenfilename()
-        self.postCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
-        df_post = pd.read_csv (import_file_path)
-        print (df_post)
-        # except FileNotFoundError:
-        #     self.postCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12))
-        #     self.postCsvLabel.place(relx = 0.08, rely = 0.48)
+        if import_file_path == "":
+            pass
+        else:
+            self.postCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
+            df_post = pd.read_csv (import_file_path)
+            print (df_post)
+
+    def getLoggerNumber(self):
+        loggers = []
+        loggerNumber = []
+        for path, subdirs, files in os.walk(dataSource):
+            for file in files:
+
+                if file.endswith(".csv"):
+                    loggers.append(file[:7])
+                    loggerNumber = list(set(loggers))      
+        
+        return loggerNumber
+
+
     
     def cycleLoggerText(self):
         try:
@@ -213,8 +256,21 @@ class SecondPage(tk.Frame):
                         
                         cleanBadData(files)
                         applyCalibration(files)
-                    # for files in currentLogger:        
-                    #     self.moveFiles(macFolders)
+
+        self.moveFiles()
+        cleanUpEmptyDir(macFolders)
+
+    def cleanBadData(self, files):
+        df = pd.read_csv(files)
+        df = df.drop(df[df['DO Temperature (C)'] > tempThreshold].index)
+        df = df.drop(df.head(2).index)
+        df = df.drop(df.tail(2).index)
+        df.to_csv(files, index = False)
+        print("it worked")
+
+    def applyCalibration(self, files):
+        # add 3 point calibration from two dataframes
+        pass
   
                     
     def moveFiles(self):
@@ -227,10 +283,13 @@ class SecondPage(tk.Frame):
                 filename = ntpath.basename(file)
                 folderStructure = file.split(os.path.sep)
                 Path(dataDestination + os.path.sep + folderStructure[-2] + os.path.sep).mkdir(parents=True, exist_ok=True)
-                os.rename(file, dataDestination + os.path.sep + folderStructure[-2] + os.path.sep + filename)  
-        #cleanUpEmptyDir(macFolders) 
-        self.listBox.update()
+                os.rename(file, dataDestination + os.path.sep + folderStructure[-2] + os.path.sep + filename)
 
+        self.listBox.delete(0, tk.END)
+        for file in self.getFiles():
+            #print("file:" + file)
+            self.listBox.insert(tk.END, ntpath.basename(file))
+         
     def getFiles(self): 
         global currentLogger, loggerValue
         loggerValue = self.currentLoggerLabel.get()
@@ -241,24 +300,24 @@ class SecondPage(tk.Frame):
 
                 if file.endswith(".csv"):
                     csvFiles.append(file)
-
         return csvFiles
     
     def calButtonCallback(self):
         self.calDataFiles()
         self.cycleLoggerText()
-        #self.moveFiles()
         cleanUpEmptyDir(macFolders)
         
     def clientExit(self):
-        
         exit()
 
-#dataSource = dataSource
+
 root = Tk()
 root.geometry("1200x700")
 
+# dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'  ## Uncover these three to skip the start page
+# dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'
 # StartUpScreen = SecondPage(root)
+
 FishFinder = StartPage(root)
 
 root.mainloop()
