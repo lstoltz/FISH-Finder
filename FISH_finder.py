@@ -98,8 +98,8 @@ class StartPage(tk.Frame):
 
         self.errorLabel = tk.Label(parent, fg="red", text="Error: please select a data source and desination!", font =('helvetica', 12, 'bold') )
 
-        self.nextPageButton = tk.Button(parent, text="      Next!     ", command=self.nextPage, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
-        self.nextPageButton.place(relx= 0.67, rely = 0.7)
+        self.nextPageButton = tk.Button(parent, text="Next!", command=self.nextPage, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 30, pady = 18)
+        self.nextPageButton.place(relx= 0.69, rely = 0.7)
 
     def getDataSource(self):
         global dataSource
@@ -176,7 +176,7 @@ class SecondPage(tk.Frame):
         self.browseButton_postCsv.place(relx = 0.08, rely = 0.37)
  
         
-        self.calButton = tk.Button(master,text="     Calibrate!     ", command=self.calButtonCallback, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
+        self.calButton = tk.Button(master,text="Calibrate!", command=self.calButtonCallback, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 25, pady = 25)
         self.calButton.place(relx = 0.7, rely = 0.7)
 
         try:
@@ -314,10 +314,10 @@ class SecondPage(tk.Frame):
 root = Tk()
 root.geometry("1200x700")
 
-# dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'  ## Uncover these three to skip the start page
-# dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'
-# StartUpScreen = SecondPage(root)
+dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'  ## Uncover these three to skip the start page
+dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'
+StartUpScreen = SecondPage(root)
 
-FishFinder = StartPage(root)
+# FishFinder = StartPage(root)
 
 root.mainloop()
