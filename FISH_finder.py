@@ -3,10 +3,8 @@ from tkinter import Tk, Label, Button, filedialog, StringVar
 import pandas as pd
 import os, fnmatch, ntpath, shutil
 from pathlib import Path
+import dateutil.parser
 
-# dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'
-# dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'  # temporary variables, when shipping final product delete and rely on UI
-# dataFlagged = r'C:\Users\lstol\Documents\Repositories\clean-data\flagged'
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 
 def getLoggerNumber():
@@ -30,9 +28,9 @@ def cleanBadData(files):
     df.to_csv(files, index = False)
     print("it worked")
 
-def applyCalibration(files):
-    # add 3 point calibration from two dataframes
-    pass
+# def applyCalibration(files):
+#     # add 3 point calibration from two dataframes
+#     pass
 
 def getListOfFiles(dataSource):
     # create a list of file and sub directories 
@@ -104,6 +102,7 @@ class StartPage(tk.Frame):
     def getDataSource(self):
         global dataSource
         dataSource = filedialog.askdirectory()
+        
         if dataSource == "":
             pass
         else:
@@ -112,6 +111,7 @@ class StartPage(tk.Frame):
     def getDataDest(self):
         global dataDestination
         dataDestination = filedialog.askdirectory()
+        self.errorLabel.place_forget()
         if dataDestination == "":
             pass
         else:
@@ -155,7 +155,7 @@ class SecondPage(tk.Frame):
         self.loggerLabel = Label(master, textvariable=self.currentLoggerLabel, font = ('helvetica', 12, 'bold'))
         self.loggerLabel.place(relx = 0.2, rely = 0.8)
 
-        self.listBox = tk.Listbox(master, width=40, height=15)
+        self.listBox = tk.Listbox(master, width=50, height=20)
         for file in self.getFiles():
             #print("file:" + file)
             self.listBox.insert(tk.END, ntpath.basename(file))
@@ -168,12 +168,61 @@ class SecondPage(tk.Frame):
         self.preCsvLabel.place(relx = 0.08, rely = 0.2) 
         self.browseButton_preCsv = tk.Button(master,text="      Select pre-deployment cal file     ", command=self.getPreCsv, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
         self.browseButton_preCsv.place(relx = 0.08, rely = 0.1)
+
+        self.preEntryTimeLabel = tk.Label(master, text = "Input Time", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.preEntryTimeLabel.place(relx = 0.3, rely = 0.05)
+
+        self.preEntryTimeLabel.place(relx = 0.3, rely = 0.05)
+        self.preEntryTimeOne = tk.Entry(master)
+        self.preEntryTimeOne.place(relx = 0.3, rely = 0.1)
+
+        self.preEntryTimeTwo = tk.Entry(master)
+        self.preEntryTimeTwo.place(relx = 0.3, rely = 0.15)
+
+        self.preEntryTimeThree = tk.Entry(master)
+        self.preEntryTimeThree.place(relx = 0.3, rely = 0.2)
+
+        self.preEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.preEntryValueLabel.place(relx = 0.4, rely = 0.05)
+
+        self.preEntryValueOne = tk.Entry(master)
+        self.preEntryValueOne.place(relx = 0.4, rely = 0.1)
+
+        self.preEntryValueTwo = tk.Entry(master)
+        self.preEntryValueTwo.place(relx = 0.4, rely = 0.15)
+
+        self.preEntryValueThree = tk.Entry(master)
+        self.preEntryValueThree.place(relx = 0.4, rely = 0.2)
  
           
         self.postCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12)) 
         self.postCsvLabel.place(relx = 0.08, rely = 0.48)
         self.browseButton_postCsv = tk.Button(master,text="     Select post-deployment cal file     ", command=self.getPostCsv, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'))
         self.browseButton_postCsv.place(relx = 0.08, rely = 0.37)
+
+        self.postEntryTimeLabel = tk.Label(master, text = "Input Time", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.postEntryTimeLabel.place(relx = 0.3, rely = 0.32)
+
+        self.postEntryTimeOne = tk.Entry(master)
+        self.postEntryTimeOne.place(relx = 0.3, rely = 0.37)
+
+        self.postEntryTimeTwo = tk.Entry(master)
+        self.postEntryTimeTwo.place(relx = 0.3, rely = 0.42)
+
+        self.postEntryTimeThree = tk.Entry(master)
+        self.postEntryTimeThree.place(relx = 0.3, rely = 0.47)
+
+        self.postEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.postEntryValueLabel.place(relx = 0.4, rely = 0.32)
+
+        self.postEntryValueOne = tk.Entry(master)
+        self.postEntryValueOne.place(relx = 0.4, rely = 0.37)
+
+        self.postEntryValueTwo = tk.Entry(master)
+        self.postEntryValueTwo.place(relx = 0.4, rely = 0.42)
+
+        self.postEntryValueThree = tk.Entry(master)
+        self.postEntryValueThree.place(relx = 0.4, rely = 0.47)
  
         
         self.calButton = tk.Button(master,text="Calibrate!", command=self.calButtonCallback, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 25, pady = 25)
@@ -192,6 +241,36 @@ class SecondPage(tk.Frame):
             self.snLabel.place_forget()
             self.calButton.place_forget()
 
+    def getStandardInput(self):
+        global pre_time_one
+        global pre_time_two
+        global pre_time_three
+        global pre_value_one
+        global pre_value_two
+        global pre_value_three
+        global post_time_one
+        global post_time_two
+        global post_time_three
+        global post_value_one
+        global post_value_two
+        global post_value_three
+
+        pre_time_one = self.preEntryTimeOne.get()
+        pre_time_two = self.preEntryTimeTwo.get()
+        pre_time_three = self.preEntryTimeThree.get()
+
+        pre_value_one = self.preEntryValueOne.get()
+        pre_value_two = self.preEntryValueTwo.get()
+        pre_value_three = self.preEntryValueThree.get()
+
+        post_time_one = self.postEntryTimeOne.get()
+        post_time_two = self.postEntryTimeTwo.get()
+        post_time_three = self.postEntryTimeThree.get()
+
+        post_value_one = self.postEntryValueOne.get()
+        post_value_two = self.postEntryValueTwo.get()
+        post_value_three = self.postEntryValueThree.get()
+        
 
     def getPreCsv(self):
         global df_pre
@@ -200,8 +279,10 @@ class SecondPage(tk.Frame):
             pass
         else:
             self.preCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
-            df_pre = pd.read_csv (import_file_path)
-            print (df_pre)
+            df_pre = pd.read_csv(import_file_path)
+            df_pre['ISO 8601 Time'] = pd.to_datetime(df_pre['ISO 8601 Time'])
+            print (df_pre['ISO 8601 Time'])
+            print(df_pre['ISO 8601 Time'].dtypes)
     
     def getPostCsv(self):
         global df_post
@@ -255,7 +336,7 @@ class SecondPage(tk.Frame):
                     for files in currentLogger:
                         
                         cleanBadData(files)
-                        applyCalibration(files)
+                        self.applyCalibration()
 
         self.moveFiles()
         cleanUpEmptyDir(macFolders)
@@ -268,9 +349,10 @@ class SecondPage(tk.Frame):
         df.to_csv(files, index = False)
         print("it worked")
 
-    def applyCalibration(self, files):
-        # add 3 point calibration from two dataframes
-        pass
+    def applyCalibration(self):
+        idx = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()
+        test = df_pre.loc[[idx]]
+        print(test)
   
                     
     def moveFiles(self):
@@ -303,16 +385,18 @@ class SecondPage(tk.Frame):
         return csvFiles
     
     def calButtonCallback(self):
+        self.getStandardInput()
         self.calDataFiles()
         self.cycleLoggerText()
         cleanUpEmptyDir(macFolders)
+        
         
     def clientExit(self):
         exit()
 
 
 root = Tk()
-root.geometry("1200x700")
+root.state('zoomed')
 
 dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'  ## Uncover these three to skip the start page
 dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'
