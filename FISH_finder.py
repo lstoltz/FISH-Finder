@@ -3,7 +3,8 @@ from tkinter import Tk, Label, Button, filedialog, StringVar
 import pandas as pd
 import os, fnmatch, ntpath, shutil
 from pathlib import Path
-import dateutil.parser
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 
@@ -159,10 +160,10 @@ class SecondPage(tk.Frame):
         for file in self.getFiles():
             #print("file:" + file)
             self.listBox.insert(tk.END, ntpath.basename(file))
-        self.listBox.place(relx = 0.6, rely = 0.1)
+        self.listBox.place(relx = 0.7, rely = 0.1)
 
         self.listBoxLabel = tk.Label(master, fg = "black", text = "Files to be Processed", font =('helvetica', 12, 'bold') )
-        self.listBoxLabel.place(relx = 0.6, rely = 0.05)
+        self.listBoxLabel.place(relx = 0.7, rely = 0.05)
 
         self.preCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12) )  
         self.preCsvLabel.place(relx = 0.08, rely = 0.2) 
@@ -170,29 +171,29 @@ class SecondPage(tk.Frame):
         self.browseButton_preCsv.place(relx = 0.08, rely = 0.1)
 
         self.preEntryTimeLabel = tk.Label(master, text = "Input Time", fg = 'black',font=('helvetica', 12, 'bold'))
-        self.preEntryTimeLabel.place(relx = 0.3, rely = 0.05)
+        self.preEntryTimeLabel.place(relx = 0.35, rely = 0.05)
 
-        self.preEntryTimeLabel.place(relx = 0.3, rely = 0.05)
+        self.preEntryTimeLabel.place(relx = 0.35, rely = 0.05)
         self.preEntryTimeOne = tk.Entry(master)
-        self.preEntryTimeOne.place(relx = 0.3, rely = 0.1)
+        self.preEntryTimeOne.place(relx = 0.35, rely = 0.1)
 
         self.preEntryTimeTwo = tk.Entry(master)
-        self.preEntryTimeTwo.place(relx = 0.3, rely = 0.15)
+        self.preEntryTimeTwo.place(relx = 0.35, rely = 0.15)
 
         self.preEntryTimeThree = tk.Entry(master)
-        self.preEntryTimeThree.place(relx = 0.3, rely = 0.2)
+        self.preEntryTimeThree.place(relx = 0.35, rely = 0.2)
 
         self.preEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
-        self.preEntryValueLabel.place(relx = 0.4, rely = 0.05)
+        self.preEntryValueLabel.place(relx = 0.45, rely = 0.05)
 
         self.preEntryValueOne = tk.Entry(master)
-        self.preEntryValueOne.place(relx = 0.4, rely = 0.1)
+        self.preEntryValueOne.place(relx = 0.45, rely = 0.1)
 
         self.preEntryValueTwo = tk.Entry(master)
-        self.preEntryValueTwo.place(relx = 0.4, rely = 0.15)
+        self.preEntryValueTwo.place(relx = 0.45, rely = 0.15)
 
         self.preEntryValueThree = tk.Entry(master)
-        self.preEntryValueThree.place(relx = 0.4, rely = 0.2)
+        self.preEntryValueThree.place(relx = 0.45, rely = 0.2)
  
           
         self.postCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12)) 
@@ -201,28 +202,28 @@ class SecondPage(tk.Frame):
         self.browseButton_postCsv.place(relx = 0.08, rely = 0.37)
 
         self.postEntryTimeLabel = tk.Label(master, text = "Input Time", fg = 'black',font=('helvetica', 12, 'bold'))
-        self.postEntryTimeLabel.place(relx = 0.3, rely = 0.32)
+        self.postEntryTimeLabel.place(relx = 0.35, rely = 0.32)
 
         self.postEntryTimeOne = tk.Entry(master)
-        self.postEntryTimeOne.place(relx = 0.3, rely = 0.37)
+        self.postEntryTimeOne.place(relx = 0.35, rely = 0.37)
 
         self.postEntryTimeTwo = tk.Entry(master)
-        self.postEntryTimeTwo.place(relx = 0.3, rely = 0.42)
+        self.postEntryTimeTwo.place(relx = 0.35, rely = 0.42)
 
         self.postEntryTimeThree = tk.Entry(master)
-        self.postEntryTimeThree.place(relx = 0.3, rely = 0.47)
+        self.postEntryTimeThree.place(relx = 0.35, rely = 0.47)
 
         self.postEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
-        self.postEntryValueLabel.place(relx = 0.4, rely = 0.32)
+        self.postEntryValueLabel.place(relx = 0.45, rely = 0.32)
 
         self.postEntryValueOne = tk.Entry(master)
-        self.postEntryValueOne.place(relx = 0.4, rely = 0.37)
+        self.postEntryValueOne.place(relx = 0.45, rely = 0.37)
 
         self.postEntryValueTwo = tk.Entry(master)
-        self.postEntryValueTwo.place(relx = 0.4, rely = 0.42)
+        self.postEntryValueTwo.place(relx = 0.45, rely = 0.42)
 
         self.postEntryValueThree = tk.Entry(master)
-        self.postEntryValueThree.place(relx = 0.4, rely = 0.47)
+        self.postEntryValueThree.place(relx = 0.45, rely = 0.47)
  
         
         self.calButton = tk.Button(master,text="Calibrate!", command=self.calButtonCallback, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 25, pady = 25)
@@ -240,37 +241,6 @@ class SecondPage(tk.Frame):
             self.browseButton_preCsv.place_forget()
             self.snLabel.place_forget()
             self.calButton.place_forget()
-
-    def getStandardInput(self):
-        global pre_time_one
-        global pre_time_two
-        global pre_time_three
-        global pre_value_one
-        global pre_value_two
-        global pre_value_three
-        global post_time_one
-        global post_time_two
-        global post_time_three
-        global post_value_one
-        global post_value_two
-        global post_value_three
-
-        pre_time_one = self.preEntryTimeOne.get()
-        pre_time_two = self.preEntryTimeTwo.get()
-        pre_time_three = self.preEntryTimeThree.get()
-
-        pre_value_one = self.preEntryValueOne.get()
-        pre_value_two = self.preEntryValueTwo.get()
-        pre_value_three = self.preEntryValueThree.get()
-
-        post_time_one = self.postEntryTimeOne.get()
-        post_time_two = self.postEntryTimeTwo.get()
-        post_time_three = self.postEntryTimeThree.get()
-
-        post_value_one = self.postEntryValueOne.get()
-        post_value_two = self.postEntryValueTwo.get()
-        post_value_three = self.postEntryValueThree.get()
-        
 
     def getPreCsv(self):
         global df_pre
@@ -306,8 +276,6 @@ class SecondPage(tk.Frame):
                     loggerNumber = list(set(loggers))      
         
         return loggerNumber
-
-
     
     def cycleLoggerText(self):
         try:
@@ -350,9 +318,24 @@ class SecondPage(tk.Frame):
         print("it worked")
 
     def applyCalibration(self):
-        idx = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()
-        test = df_pre.loc[[idx]]
-        print(test)
+        idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()
+        idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
+        idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
+
+        row1 = df_pre.loc[[idx_t1]]
+        row2 = df_pre.loc[[idx_t2]]
+        row3 = df_pre.loc[[idx_t3]]
+
+        x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+
+        y_pre_std = np.array([self.preEntryValueOne.get(), self.preEntryValueTwo.get(), self.preEntryValueThree.get()]).reshape((-1,1))
+
+        model_pre = LinearRegression().fit(x_pre, y_pre_std)
+
+        pre_slope = model_pre.coef_
+        pre_intcpt = model_pre.intercept_
+
+        print(pre_slope, pre_intcpt)
   
                     
     def moveFiles(self):
@@ -385,7 +368,6 @@ class SecondPage(tk.Frame):
         return csvFiles
     
     def calButtonCallback(self):
-        self.getStandardInput()
         self.calDataFiles()
         self.cycleLoggerText()
         cleanUpEmptyDir(macFolders)
