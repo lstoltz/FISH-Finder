@@ -8,30 +8,27 @@ from sklearn.linear_model import LinearRegression
 
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 
-def getLoggerNumber():
-    loggers = []
-    loggerNumber = []
+# def getLoggerNumber():
+#     loggers = []
+#     loggerNumber = []
 
-    for path, subdirs, files in os.walk(dataSource):
-        for file in files:
+#     for path, subdirs, files in os.walk(dataSource):
+#         for file in files:
 
-            if file.endswith(".csv"):
-                loggers.append(file[:7])
-                loggerNumber = list(set(loggers))      
+#             if file.endswith(".csv"):
+#                 loggers.append(file[:7])
+#                 loggerNumber = list(set(loggers))      
     
-    return loggerNumber
+#     return loggerNumber
                 
-def cleanBadData(files):
-    df = pd.read_csv(files)
-    df = df.drop(df[df['DO Temperature (C)'] > tempThreshold].index)
-    df = df.drop(df.head(2).index)
-    df = df.drop(df.tail(2).index)
-    df.to_csv(files, index = False)
-    print("it worked")
+# def cleanBadData(files):
+#     df = pd.read_csv(files)
+#     df = df.drop(df[df['DO Temperature (C)'] > tempThreshold].index)
+#     df = df.drop(df.head(2).index)
+#     df = df.drop(df.tail(2).index)
+#     df.to_csv(files, index = False)
+#     print("it worked")
 
-# def applyCalibration(files):
-#     # add 3 point calibration from two dataframes
-#     pass
 
 def getListOfFiles(dataSource):
     # create a list of file and sub directories 
@@ -59,7 +56,7 @@ def cleanUpEmptyDir(macFolders):
 
 
 
-class StartPage(tk.Frame):
+class StartPage(tk.Frame):   # setting up formatting for the first page of the program 
 
     def __init__(self, parent):
         self.parent = parent
@@ -100,7 +97,7 @@ class StartPage(tk.Frame):
         self.nextPageButton = tk.Button(parent, text="Next!", command=self.nextPage, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 30, pady = 18)
         self.nextPageButton.place(relx= 0.69, rely = 0.7)
 
-    def getDataSource(self):
+    def getDataSource(self):  # where data that need to be cleaned/calibrated reside
         global dataSource
         dataSource = filedialog.askdirectory()
         
@@ -109,7 +106,7 @@ class StartPage(tk.Frame):
         else:
             self.dataSourceLabel.config(text=dataSource, fg = "black", font =('helvetica', 12))
 
-    def getDataDest(self):
+    def getDataDest(self): # where data that are cleaned/calibrated are shuttled to when finished
         global dataDestination
         dataDestination = filedialog.askdirectory()
         self.errorLabel.place_forget()
@@ -118,7 +115,7 @@ class StartPage(tk.Frame):
         else:
             self.dataDestLabel.config(text=dataDestination, fg = "black", font =('helvetica', 12))
     
-    def nextPage(self):
+    def nextPage(self): 
         try:
             if os.path.exists(dataSource) and os.path.exists(dataDestination):
                 self.dataSourceButton.place_forget()
@@ -134,7 +131,7 @@ class StartPage(tk.Frame):
         except NameError:
             self.errorLabel.place(relx= 0.04, rely = 0.5)
         
-class SecondPage(tk.Frame):
+class SecondPage(tk.Frame):  # this page is the work horse that performs the moving/cleaning/calibration
 
     def __init__(self,master):
         self.master = master
@@ -224,9 +221,11 @@ class SecondPage(tk.Frame):
 
         self.postEntryValueThree = tk.Entry(master)
         self.postEntryValueThree.place(relx = 0.45, rely = 0.47)
- 
+
+        self.skipButton = tk.Button(master, text = "Skip Logger", command = self.skipButtonCallBack, bg = 'black', fg='white', font=('helvetica', 12, 'bold'), padx = 18, pady = 18)
+        self.skipButton.place(relx = 0.7, rely = 0.8)
         
-        self.calButton = tk.Button(master,text="Calibrate!", command=self.calButtonCallback, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 25, pady = 25)
+        self.calButton = tk.Button(master,text="Calibrate!", command=self.calButtonCallBack, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 25, pady = 25)
         self.calButton.place(relx = 0.7, rely = 0.7)
 
         try:
@@ -242,7 +241,7 @@ class SecondPage(tk.Frame):
             self.snLabel.place_forget()
             self.calButton.place_forget()
 
-    def getPreCsv(self):
+    def getPreCsv(self): # csv file of pre deployment calibration
         global df_pre
         import_file_path = filedialog.askopenfilename()
         if import_file_path == "":
@@ -254,7 +253,7 @@ class SecondPage(tk.Frame):
             print (df_pre['ISO 8601 Time'])
             print(df_pre['ISO 8601 Time'].dtypes)
     
-    def getPostCsv(self):
+    def getPostCsv(self): # csv file of post deployment calibration
         global df_post
         # try:
         import_file_path = filedialog.askopenfilename()
@@ -265,7 +264,7 @@ class SecondPage(tk.Frame):
             df_post = pd.read_csv (import_file_path)
             print (df_post)
 
-    def getLoggerNumber(self):
+    def getLoggerNumber(self): # prints the logger that is currently being calibrated
         loggers = []
         loggerNumber = []
         for path, subdirs, files in os.walk(dataSource):
@@ -277,7 +276,7 @@ class SecondPage(tk.Frame):
         
         return loggerNumber
     
-    def cycleLoggerText(self):
+    def cycleLoggerText(self): # cycles which logger name is being displayed
         try:
             self.currentLoggerIndex += 1
             #self.currentLoggerIndex %= len(self.LOGGER_TEXT) # wrap around
@@ -289,7 +288,7 @@ class SecondPage(tk.Frame):
             self.loggersDoneLabel.place(relx = 0.1, rely = 0.8)
               
 
-    def calDataFiles(self):
+    def calDataFiles(self): # Queues all the files that are present in the data source that match the logger number that are being displayed
         global currentLogger, loggerValue, macFolders
         loggerValue = self.currentLoggerLabel.get()
         for files in os.listdir(dataSource):
@@ -303,13 +302,13 @@ class SecondPage(tk.Frame):
                     currentLogger = fnmatch.filter(csvFiles, str('*'+loggerValue+'*'))
                     for files in currentLogger:
                         
-                        cleanBadData(files)
+                        self.cleanBadData(files)
                         self.applyCalibration()
 
         self.moveFiles()
         cleanUpEmptyDir(macFolders)
 
-    def cleanBadData(self, files):
+    def cleanBadData(self, files): # removes all values over temp threshold, then deletes the first two entries and the last two entries from the remaining excel file
         df = pd.read_csv(files)
         df = df.drop(df[df['DO Temperature (C)'] > tempThreshold].index)
         df = df.drop(df.head(2).index)
@@ -318,27 +317,41 @@ class SecondPage(tk.Frame):
         print("it worked")
 
     def applyCalibration(self):
-        idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()
+        idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
         idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
         idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
 
+        idx_t4 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeOne.get())).abs().idxmin()
+        idx_t5 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeTwo.get())).abs().idxmin()
+        idx_t6 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeThree.get())).abs().idxmin()
+
         row1 = df_pre.loc[[idx_t1]]
-        row2 = df_pre.loc[[idx_t2]]
+        row2 = df_pre.loc[[idx_t2]] 
         row3 = df_pre.loc[[idx_t3]]
 
-        x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+        row4 = df_post.loc[[idx_t4]]
+        row5 = df_post.loc[[idx_t5]]
+        row6 = df_post.loc[[idx_t6]]
 
+        x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
         y_pre_std = np.array([self.preEntryValueOne.get(), self.preEntryValueTwo.get(), self.preEntryValueThree.get()]).reshape((-1,1))
 
-        model_pre = LinearRegression().fit(x_pre, y_pre_std)
+        x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+        y_post_std = np.array([self.postEntryValueOne.get(), self.postEntryValueTwo.get(), self.postEntryValueThree.get()]).reshape((-1,1))
+
+        model_pre = LinearRegression().fit(x_pre, y_pre_std)      # linear regression to get differences in slope/intercept for pre/post calibrations
+        model_post = LinearRegression().fit(x_post,y_post_std)
 
         pre_slope = model_pre.coef_
         pre_intcpt = model_pre.intercept_
 
-        print(pre_slope, pre_intcpt)
+        post_slope = model_post.coef_
+        post_intcpt = model_post.intercept_
+
+        print(pre_slope, pre_intcpt, post_intcpt, post_slope)
   
                     
-    def moveFiles(self):
+    def moveFiles(self): # moves files after finished cleaning/calibhrating. Then updates the listbox 
         loggerValue = self.currentLoggerLabel.get()
         listOfFiles = getListOfFiles(dataSource)
         fileQueue = []      
@@ -355,7 +368,7 @@ class SecondPage(tk.Frame):
             #print("file:" + file)
             self.listBox.insert(tk.END, ntpath.basename(file))
          
-    def getFiles(self): 
+    def getFiles(self): # returns all the csv files matching the logger number
         global currentLogger, loggerValue
         loggerValue = self.currentLoggerLabel.get()
 
@@ -367,10 +380,13 @@ class SecondPage(tk.Frame):
                     csvFiles.append(file)
         return csvFiles
     
-    def calButtonCallback(self):
+    def calButtonCallBack(self):
         self.calDataFiles()
         self.cycleLoggerText()
         cleanUpEmptyDir(macFolders)
+    
+    def skipButtonCallBack(self):
+        self.cycleLoggerText()
         
         
     def clientExit(self):
@@ -378,6 +394,7 @@ class SecondPage(tk.Frame):
 
 
 root = Tk()
+root.iconbitmap('merman.ico')
 root.state('zoomed')
 
 dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'  ## Uncover these three to skip the start page
