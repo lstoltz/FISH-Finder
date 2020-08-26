@@ -8,27 +8,6 @@ from sklearn.linear_model import LinearRegression
 
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 
-# def getLoggerNumber():
-#     loggers = []
-#     loggerNumber = []
-
-#     for path, subdirs, files in os.walk(dataSource):
-#         for file in files:
-
-#             if file.endswith(".csv"):
-#                 loggers.append(file[:7])
-#                 loggerNumber = list(set(loggers))      
-    
-#     return loggerNumber
-                
-# def cleanBadData(files):
-#     df = pd.read_csv(files)
-#     df = df.drop(df[df['DO Temperature (C)'] > tempThreshold].index)
-#     df = df.drop(df.head(2).index)
-#     df = df.drop(df.tail(2).index)
-#     df.to_csv(files, index = False)
-#     print("it worked")
-
 
 def getListOfFiles(dataSource):
     # create a list of file and sub directories 
