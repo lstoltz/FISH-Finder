@@ -5,9 +5,14 @@ import os, fnmatch, ntpath, shutil
 from pathlib import Path
 import numpy as np
 from sklearn.linear_model import LinearRegression
+import csv
 
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
-
+with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
+    fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt"]
+    writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
+    writer.writeheader()
+    
 
 def getListOfFiles(dataSource):
     # create a list of file and sub directories 
@@ -32,8 +37,6 @@ def cleanUpEmptyDir(macFolders):
             os.rmdir(macFolders)
     except FileNotFoundError:
         pass
-
-
 
 class StartPage(tk.Frame):   # setting up formatting for the first page of the program 
 
@@ -229,8 +232,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
             self.preCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
             df_pre = pd.read_csv(import_file_path)
             df_pre['ISO 8601 Time'] = pd.to_datetime(df_pre['ISO 8601 Time'])
-            print (df_pre['ISO 8601 Time'])
-            print(df_pre['ISO 8601 Time'].dtypes)
+            print(df_pre)
     
     def getPostCsv(self): # csv file of post deployment calibration
         global df_post
@@ -241,6 +243,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         else:
             self.postCsvLabel.config(text=ntpath.basename(import_file_path), fg = "black", font =('helvetica', 12))
             df_post = pd.read_csv (import_file_path)
+            df_post['ISO 8601 Time'] = pd.to_datetime(df_post['ISO 8601 Time'])
             print (df_post)
 
     def getLoggerNumber(self): # prints the logger that is currently being calibrated
@@ -265,37 +268,32 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
             self.loggerLabel.place_forget()
             self.snLabel.place_forget() 
             self.loggersDoneLabel.place(relx = 0.1, rely = 0.8)
-              
+          
 
     def calDataFiles(self): # Queues all the files that are present in the data source that match the logger number that are being displayed
-        global currentLogger, loggerValue, macFolders
         loggerValue = self.currentLoggerLabel.get()
+        calCoef = self.calcLinearReg()            
+        with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
+            fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt"]
+            writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
+            writer.writerow({"logger_sn": calCoef[0], "pre_slope": calCoef[1], "pre_intcpt": calCoef[2], "post_slope": calCoef[3],"post_intcpt": calCoef[4]})
+
         for files in os.listdir(dataSource):
-            macFolders = os.path.join(dataSource, files)
-            for file in os.listdir(macFolders):
-                filePath = os.path.join(macFolders, file)
-                fileName, fileExtension = os.path.splitext(filePath)
-
-                if (fileExtension == ".csv"):
-                    csvFiles = [filePath]
-                    currentLogger = fnmatch.filter(csvFiles, str('*'+loggerValue+'*'))
-                    for files in currentLogger:
-                        
-                        self.cleanBadData(files)
-                        self.applyCalibration()
-
+            # macFolders = os.path.join(dataSource, files)
+            # for file in os.listdir(macFolders):
+            #     filePath = os.path.join(macFolders, file)
+            filename = os.path.join(dataSource, files)
+            if fnmatch.fnmatch(files, str(loggerValue)+'*'):
+                print(files) 
+        
+            # for files in currentLogger:
+                # apply cal
+                # self.cleanBadData(files)
+                
         self.moveFiles()
-        cleanUpEmptyDir(macFolders)
+        # cleanUpEmptyDir(macFolders)
 
-    def cleanBadData(self, files): # removes all values over temp threshold, then deletes the first two entries and the last two entries from the remaining excel file
-        df = pd.read_csv(files)
-        df = df.drop(df[df['DO Temperature (C)'] > tempThreshold].index)
-        df = df.drop(df.head(2).index)
-        df = df.drop(df.tail(2).index)
-        df.to_csv(files, index = False)
-        print("it worked")
-
-    def applyCalibration(self):
+    def calcLinearReg(self):
         idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
         idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
         idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
@@ -321,14 +319,12 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         model_pre = LinearRegression().fit(x_pre, y_pre_std)      # linear regression to get differences in slope/intercept for pre/post calibrations
         model_post = LinearRegression().fit(x_post,y_post_std)
 
-        pre_slope = model_pre.coef_
-        pre_intcpt = model_pre.intercept_
+        return self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), float(model_post.coef_), float(model_post.intercept_)
 
-        post_slope = model_post.coef_
-        post_intcpt = model_post.intercept_
 
-        print(pre_slope, pre_intcpt, post_intcpt, post_slope)
-  
+    def applyCal(self):
+        pass
+        # actually apply calibration to calculation
                     
     def moveFiles(self): # moves files after finished cleaning/calibhrating. Then updates the listbox 
         loggerValue = self.currentLoggerLabel.get()
@@ -354,7 +350,6 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         csvFiles = []
         for path, subdirs, files in os.walk(dataSource):
             for file in files:
-
                 if file.endswith(".csv"):
                     csvFiles.append(file)
         return csvFiles
@@ -362,7 +357,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
     def calButtonCallBack(self):
         self.calDataFiles()
         self.cycleLoggerText()
-        cleanUpEmptyDir(macFolders)
+        # cleanUpEmptyDir(macFolders)
     
     def skipButtonCallBack(self):
         self.cycleLoggerText()
@@ -376,8 +371,8 @@ root = Tk()
 root.iconbitmap('merman.ico')
 root.state('zoomed')
 
-dataSource = r'C:\Users\lstol\Documents\Repositories\clean-data\inbox'  ## Uncover these three to skip the start page
-dataDestination = r'C:\Users\lstol\Documents\Repositories\clean-data\outbox'
+dataSource = r'C:\Users\lstol\Documents\Repositories\FISH-Finder\inbox'  ## Uncover these three to skip the start page
+dataDestination = r'C:\Users\lstol\Documents\Repositories\FISH-Finder\outbox'
 StartUpScreen = SecondPage(root)
 
 # FishFinder = StartPage(root)
