@@ -31,12 +31,6 @@ def getListOfFiles(dataSource):
                 
     return allFiles
                 
-def cleanUpEmptyDir(macFolders):
-    try:
-        if (len(os.listdir(macFolders)) == 0):
-            os.rmdir(macFolders)
-    except FileNotFoundError:
-        pass
 
 class StartPage(tk.Frame):   # setting up formatting for the first page of the program 
 
@@ -225,7 +219,8 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
     def getPreCsv(self): # csv file of pre deployment calibration
         global df_pre
-        import_file_path = filedialog.askopenfilename()
+        import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
+        # import_file_path = filedialog.askopenfilename()
         if import_file_path == "":
             pass
         else:
@@ -236,8 +231,8 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
     
     def getPostCsv(self): # csv file of post deployment calibration
         global df_post
-        # try:
-        import_file_path = filedialog.askopenfilename()
+        import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
+        # import_file_path = filedialog.askopenfilename()
         if import_file_path == "":
             pass
         else:
@@ -272,26 +267,18 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
     def calDataFiles(self): # Queues all the files that are present in the data source that match the logger number that are being displayed
         loggerValue = self.currentLoggerLabel.get()
-        calCoef = self.calcLinearReg()            
-        with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
-            fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt"]
-            writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
-            writer.writerow({"logger_sn": calCoef[0], "pre_slope": calCoef[1], "pre_intcpt": calCoef[2], "post_slope": calCoef[3],"post_intcpt": calCoef[4]})
+        # calCoef = self.calcLinearReg()            ## testing, unvover to use
+        # with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
+        #     fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt"]
+        #     writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
+        #     writer.writerow({"logger_sn": calCoef[0], "pre_slope": calCoef[1], "pre_intcpt": calCoef[2], "post_slope": calCoef[3],"post_intcpt": calCoef[4]})
 
         for files in os.listdir(dataSource):
-            # macFolders = os.path.join(dataSource, files)
-            # for file in os.listdir(macFolders):
-            #     filePath = os.path.join(macFolders, file)
-            filename = os.path.join(dataSource, files)
             if fnmatch.fnmatch(files, str(loggerValue)+'*'):
                 print(files) 
-        
-            # for files in currentLogger:
-                # apply cal
-                # self.cleanBadData(files)
-                
+                self.applyCal(files)   
         self.moveFiles()
-        # cleanUpEmptyDir(macFolders)
+
 
     def calcLinearReg(self):
         idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
@@ -321,8 +308,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
         return self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), float(model_post.coef_), float(model_post.intercept_)
 
-
-    def applyCal(self):
+    def applyCal(self, files):
         pass
         # actually apply calibration to calculation
                     
@@ -340,13 +326,10 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
         self.listBox.delete(0, tk.END)
         for file in self.getFiles():
-            #print("file:" + file)
             self.listBox.insert(tk.END, ntpath.basename(file))
          
     def getFiles(self): # returns all the csv files matching the logger number
-        global currentLogger, loggerValue
         loggerValue = self.currentLoggerLabel.get()
-
         csvFiles = []
         for path, subdirs, files in os.walk(dataSource):
             for file in files:
@@ -357,7 +340,6 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
     def calButtonCallBack(self):
         self.calDataFiles()
         self.cycleLoggerText()
-        # cleanUpEmptyDir(macFolders)
     
     def skipButtonCallBack(self):
         self.cycleLoggerText()
