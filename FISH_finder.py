@@ -156,7 +156,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         self.preEntryTimeThree = tk.Entry(master)
         self.preEntryTimeThree.place(relx = 0.35, rely = 0.2)
 
-        self.preEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.preEntryValueLabel = tk.Label(master, text = "Input Value (mg/L)", fg = 'black',font=('helvetica', 12, 'bold'))
         self.preEntryValueLabel.place(relx = 0.45, rely = 0.05)
 
         self.preEntryValueOne = tk.Entry(master)
@@ -186,7 +186,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         self.postEntryTimeThree = tk.Entry(master)
         self.postEntryTimeThree.place(relx = 0.35, rely = 0.47)
 
-        self.postEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.postEntryValueLabel = tk.Label(master, text = "Input Value (mg/L)", fg = 'black',font=('helvetica', 12, 'bold'))
         self.postEntryValueLabel.place(relx = 0.45, rely = 0.32)
 
         self.postEntryValueOne = tk.Entry(master)
@@ -308,7 +308,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
         return self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), float(model_post.coef_), float(model_post.intercept_)
 
-    def applyCal(self, files):
+    def applyCal(self, files):   
         pass
         # actually apply calibration to calculation
                     
