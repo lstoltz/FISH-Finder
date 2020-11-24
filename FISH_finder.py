@@ -131,9 +131,30 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
         self.listBox = tk.Listbox(master, width=50, height=20)
         for file in self.getFiles():
-            #print("file:" + file)
             self.listBox.insert(tk.END, ntpath.basename(file))
         self.listBox.place(relx = 0.7, rely = 0.1)
+
+        self.pre = tk.IntVar()
+        self.rdioOnePre = tk.Radiobutton(master, text='mg/l', variable=self.pre, value=1) 
+        self.rdioOnePre.place(relx = 0.55, rely = 0.1)
+        self.rdioTwoPre = tk.Radiobutton(master, text='ml/l', variable=self.pre, value=2) 
+        self.rdioTwoPre.place(relx = 0.55, rely = 0.15)
+        self.rdioThreePre = tk.Radiobutton(master, text='mmol/ml', variable=self.pre, value=3)
+        self.rdioThreePre.place(relx = 0.55, rely = 0.2)
+        self.unitsLabelPre = tk.Label(master, fg="black", text="Pre-delpoy DO Units", font =('helvetica', 10,'bold') )
+        self.unitsLabelPre.place(relx = 0.55, rely = 0.05)
+        self.pre.set(1) # initialize
+
+        self.post = tk.IntVar()
+        self.rdioOnePost = tk.Radiobutton(master, text='mg/l', variable=self.post, value=1) 
+        self.rdioOnePost.place(relx = 0.55, rely = 0.37)
+        self.rdioTwoPost = tk.Radiobutton(master, text='ml/l', variable=self.post, value=2) 
+        self.rdioTwoPost.place(relx = 0.55, rely = 0.42)
+        self.rdioThreePost = tk.Radiobutton(master, text='mmol/ml', variable=self.post, value=3)
+        self.rdioThreePost.place(relx = 0.55, rely = 0.47)
+        self.unitsLabelPost = tk.Label(master, fg="black", text="Post-deploy DO Units", font =('helvetica', 10,'bold') )
+        self.unitsLabelPost.place(relx = 0.55, rely = 0.32)
+        self.post.set(1) # initialize
 
         self.listBoxLabel = tk.Label(master, fg = "black", text = "Files to be Processed", font =('helvetica', 12, 'bold') )
         self.listBoxLabel.place(relx = 0.7, rely = 0.05)
@@ -156,7 +177,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         self.preEntryTimeThree = tk.Entry(master)
         self.preEntryTimeThree.place(relx = 0.35, rely = 0.2)
 
-        self.preEntryValueLabel = tk.Label(master, text = "Input Value (mg/L)", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.preEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
         self.preEntryValueLabel.place(relx = 0.45, rely = 0.05)
 
         self.preEntryValueOne = tk.Entry(master)
@@ -167,7 +188,6 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
         self.preEntryValueThree = tk.Entry(master)
         self.preEntryValueThree.place(relx = 0.45, rely = 0.2)
- 
           
         self.postCsvLabel = tk.Label(master, fg="red", text="No file selected.", font =('helvetica', 12)) 
         self.postCsvLabel.place(relx = 0.08, rely = 0.48)
@@ -186,7 +206,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         self.postEntryTimeThree = tk.Entry(master)
         self.postEntryTimeThree.place(relx = 0.35, rely = 0.47)
 
-        self.postEntryValueLabel = tk.Label(master, text = "Input Value (mg/L)", fg = 'black',font=('helvetica', 12, 'bold'))
+        self.postEntryValueLabel = tk.Label(master, text = "Input Value", fg = 'black',font=('helvetica', 12, 'bold'))
         self.postEntryValueLabel.place(relx = 0.45, rely = 0.32)
 
         self.postEntryValueOne = tk.Entry(master)
@@ -199,7 +219,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         self.postEntryValueThree.place(relx = 0.45, rely = 0.47)
 
         self.skipButton = tk.Button(master, text = "Skip Logger", command = self.skipButtonCallBack, bg = 'black', fg='white', font=('helvetica', 12, 'bold'), padx = 18, pady = 18)
-        self.skipButton.place(relx = 0.7, rely = 0.8)
+        self.skipButton.place(relx = 0.7, rely = 0.85)
         
         self.calButton = tk.Button(master,text="Calibrate!", command=self.calButtonCallBack, bg='#dc4405', fg='white', font=('helvetica', 12, 'bold'), padx = 25, pady = 25)
         self.calButton.place(relx = 0.7, rely = 0.7)
@@ -267,7 +287,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
     def calDataFiles(self): # Queues all the files that are present in the data source that match the logger number that are being displayed
         loggerValue = self.currentLoggerLabel.get()
-        # calCoef = self.calcLinearReg()            ## testing, unvover to use
+        calCoef = self.calcLinearReg()            ## testing, unvover to use
         # with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
         #     fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt"]
         #     writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
@@ -297,11 +317,41 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         row5 = df_post.loc[[idx_t5]]
         row6 = df_post.loc[[idx_t6]]
 
-        x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
-        y_pre_std = np.array([self.preEntryValueOne.get(), self.preEntryValueTwo.get(), self.preEntryValueThree.get()]).reshape((-1,1))
+        if self.pre.get() == 1: # mg/l
+            x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
+            y_pre_std = np.array([float(self.preEntryValueOne.get()), float(self.preEntryValueTwo.get()), float(self.preEntryValueThree.get())]).reshape((-1,1))
+            print("pre mgl works")
 
-        x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
-        y_post_std = np.array([self.postEntryValueOne.get(), self.postEntryValueTwo.get(), self.postEntryValueThree.get()]).reshape((-1,1))
+        elif self.pre.get() == 2: # ml/l
+            x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
+            y_pre_std = np.array([self.mll2mgl(float(self.preEntryValueOne.get())), self.mll2mgl(float(self.preEntryValueTwo.get())), self.mll2mgl(float(self.preEntryValueThree.get()))]).reshape((-1,1))
+            print("pre ml works")
+
+        elif self.pre.get() == 3: # mmol/ml
+            x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
+            y_pre_std = np.array([self.mmol2mgl(float(self.preEntryValueOne.get())), self.mmol2mgl(float(self.preEntryValueTwo.get())), self.mmol2mgl(float(self.preEntryValueThree.get()))]).reshape((-1,1))
+            print("pre mmol works")
+
+        else:
+            pass
+
+        if self.post.get() == 1: # mg/l
+            x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+            y_post_std = np.array([float(self.postEntryValueOne.get()), float(self.postEntryValueTwo.get()), float(self.postEntryValueThree.get())]).reshape((-1,1))
+            print("post mgl works")
+
+        elif self.post.get() == 2: # ml/l
+            x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+            y_post_std = np.array([self.mll2mgl(float(self.postEntryValueOne.get())), self.mll2mgl(float(self.postEntryValueTwo.get())), self.mll2mgl(float(self.postEntryValueThree.get()))]).reshape((-1,1))
+            print("post ml works")
+
+        elif self.post.get() == 3: # mmol/ml
+            x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+            y_post_std = np.array([self.mmol2mgl(float(self.postEntryValueOne.get())), self.mmol2mgl(float(self.postEntryValueTwo.get())), self.mmol2mgl(float(self.postEntryValueThree.get()))]).reshape((-1,1))
+            print("post mmol works")
+
+        else:
+            pass
 
         model_pre = LinearRegression().fit(x_pre, y_pre_std)      # linear regression to get differences in slope/intercept for pre/post calibrations
         model_post = LinearRegression().fit(x_post,y_post_std)
@@ -311,6 +361,15 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
     def applyCal(self, files):   
         pass
         # actually apply calibration to calculation
+    
+    def mmol2mgl(self, mmol):
+        mg = mmol/31.1
+        return mg
+    
+    def mll2mgl(self, mml):
+        mg = mml/0.7
+        return mg
+
                     
     def moveFiles(self): # moves files after finished cleaning/calibhrating. Then updates the listbox 
         loggerValue = self.currentLoggerLabel.get()
