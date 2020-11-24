@@ -124,6 +124,12 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
         self.emptyInboxErrorlabel = Label(master, text = self.fatalErrMsg, fg = 'red', font = ('helvetica', 12, 'bold'))
 
+        self.timeMsgErr = """Error: Invalid time input"""
+        self.timeMsglabel = tk.Label(master, text = self.timeMsgErr, fg = 'red', font = ('helvetica', 12, 'bold'))
+
+        self.inputMsgErr = """Error: Invalid DO input"""
+        self.inputMsglabel = tk.Label(master, text = self.inputMsgErr, fg = 'red', font = ('helvetica', 12, 'bold'))
+
         self.loggersDoneLabel = tk.Label(master, text = "All loggers successfully calibrated! Please close this window", fg = 'green', font = ('helvetica', 12, 'bold'))
         
         self.loggerLabel = Label(master, textvariable=self.currentLoggerLabel, font = ('helvetica', 12, 'bold'))
@@ -274,18 +280,22 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         return loggerNumber
     
     def cycleLoggerText(self): # cycles which logger name is being displayed
-        try:
-            self.currentLoggerIndex += 1
-            #self.currentLoggerIndex %= len(self.LOGGER_TEXT) # wrap around
-            self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
-                
-        except IndexError:
-            self.loggerLabel.place_forget()
-            self.snLabel.place_forget() 
-            self.loggersDoneLabel.place(relx = 0.1, rely = 0.8)
+        if calCoef is None:
+            pass
+        else:
+            try:
+                self.currentLoggerIndex += 1
+                #self.currentLoggerIndex %= len(self.LOGGER_TEXT) # wrap around
+                self.currentLoggerLabel.set(self.LOGGER_TEXT[self.currentLoggerIndex])
+                    
+            except IndexError:
+                self.loggerLabel.place_forget()
+                self.snLabel.place_forget() 
+                self.loggersDoneLabel.place(relx = 0.1, rely = 0.8)
           
 
     def calDataFiles(self): # Queues all the files that are present in the data source that match the logger number that are being displayed
+        global calCoef
         loggerValue = self.currentLoggerLabel.get()
         calCoef = self.calcLinearReg()            ## testing, unvover to use
         # with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
@@ -296,67 +306,95 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         for files in os.listdir(dataSource):
             if fnmatch.fnmatch(files, str(loggerValue)+'*'):
                 print(files) 
-                self.applyCal(files)   
-        self.moveFiles()
+                self.applyCal(files)
+        if calCoef is None:
+            pass
+        else:
+            self.moveFiles()
 
 
     def calcLinearReg(self):
-        idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
-        idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
-        idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
+        try:
+            self.timeMsglabel.place_forget()
+            idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
+            idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
+            idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
 
-        idx_t4 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeOne.get())).abs().idxmin()
-        idx_t5 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeTwo.get())).abs().idxmin()
-        idx_t6 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeThree.get())).abs().idxmin()
+            idx_t4 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeOne.get())).abs().idxmin()
+            idx_t5 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeTwo.get())).abs().idxmin()
+            idx_t6 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeThree.get())).abs().idxmin()
+            print(idx_t1)
+            print(idx_t2)
 
-        row1 = df_pre.loc[[idx_t1]]
-        row2 = df_pre.loc[[idx_t2]] 
-        row3 = df_pre.loc[[idx_t3]]
+            row1 = df_pre.loc[[idx_t1]]
+            row2 = df_pre.loc[[idx_t2]] 
+            row3 = df_pre.loc[[idx_t3]]
 
-        row4 = df_post.loc[[idx_t4]]
-        row5 = df_post.loc[[idx_t5]]
-        row6 = df_post.loc[[idx_t6]]
+            row4 = df_post.loc[[idx_t4]]
+            row5 = df_post.loc[[idx_t5]]
+            row6 = df_post.loc[[idx_t6]]
 
-        if self.pre.get() == 1: # mg/l
-            x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
-            y_pre_std = np.array([float(self.preEntryValueOne.get()), float(self.preEntryValueTwo.get()), float(self.preEntryValueThree.get())]).reshape((-1,1))
-            print("pre mgl works")
+        except: 
+            self.timeMsglabel.place(relx = 0.45, rely  = 0.55)
+        # except KeyError:
+        #     self.timeMsglabel.place(relx = 0.45, rely  = 0.55)
 
-        elif self.pre.get() == 2: # ml/l
-            x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
-            y_pre_std = np.array([self.mll2mgl(float(self.preEntryValueOne.get())), self.mll2mgl(float(self.preEntryValueTwo.get())), self.mll2mgl(float(self.preEntryValueThree.get()))]).reshape((-1,1))
-            print("pre ml works")
+        try:
+            self.inputMsglabel.place_forget()
+            if self.pre.get() == 1: # mg/l
+                x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
+                y_pre_std = np.array([float(self.preEntryValueOne.get()), float(self.preEntryValueTwo.get()), float(self.preEntryValueThree.get())]).reshape((-1,1))
 
-        elif self.pre.get() == 3: # mmol/ml
-            x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
-            y_pre_std = np.array([self.mmol2mgl(float(self.preEntryValueOne.get())), self.mmol2mgl(float(self.preEntryValueTwo.get())), self.mmol2mgl(float(self.preEntryValueThree.get()))]).reshape((-1,1))
-            print("pre mmol works")
+            elif self.pre.get() == 2: # ml/l
+                x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
+                y_pre_std = np.array([self.mll2mgl(float(self.preEntryValueOne.get())), self.mll2mgl(float(self.preEntryValueTwo.get())), self.mll2mgl(float(self.preEntryValueThree.get()))]).reshape((-1,1))
 
-        else:
+            elif self.pre.get() == 3: # mmol/ml
+                x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
+                y_pre_std = np.array([self.mmol2mgl(float(self.preEntryValueOne.get())), self.mmol2mgl(float(self.preEntryValueTwo.get())), self.mmol2mgl(float(self.preEntryValueThree.get()))]).reshape((-1,1))
+
+            else:
+                pass
+        except Exception:
+            self.inputMsglabel.place(relx = 0.45 , rely = 0.6)
+        # except UnboundLocalError:
+        #     self.inputMsglabel.place(relx = 0.45 , rely = 0.55)
+        
+        try: 
+            self.inputMsglabel.place_forget()
+            if self.post.get() == 1: # mg/l
+                x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+                y_post_std = np.array([float(self.postEntryValueOne.get()), float(self.postEntryValueTwo.get()), float(self.postEntryValueThree.get())]).reshape((-1,1))
+
+            elif self.post.get() == 2: # ml/l
+                x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+                y_post_std = np.array([self.mll2mgl(float(self.postEntryValueOne.get())), self.mll2mgl(float(self.postEntryValueTwo.get())), self.mll2mgl(float(self.postEntryValueThree.get()))]).reshape((-1,1))
+
+            elif self.post.get() == 3: # mmol/ml
+                x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+                y_post_std = np.array([self.mmol2mgl(float(self.postEntryValueOne.get())), self.mmol2mgl(float(self.postEntryValueTwo.get())), self.mmol2mgl(float(self.postEntryValueThree.get()))]).reshape((-1,1))
+
+            else:
+                pass
+        except (ValueError, UnboundLocalError) as error:
+            self.inputMsglabel.place(relx = 0.45 , rely = 0.6)
+        # except UnboundLocalError:
+        #     self.inputMsglabel.place(relx = 0.45 , rely = 0.55)
+
+        try:
+            model_pre = LinearRegression().fit(x_pre, y_pre_std) # linear regression to get differences in slope/intercept for pre/post calibrations
+            model_post = LinearRegression().fit(x_post,y_post_std)
+        except UnboundLocalError:
+            self.inputMsglabel.place(relx = 0.45 , rely = 0.6) 
+
+        try:
+            # self.inputMsglabel.place_forget()
+            # self.timeMsglabel.place_forget()
+            return self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), float(model_post.coef_), float(model_post.intercept_)     
+        except UnboundLocalError:
             pass
-
-        if self.post.get() == 1: # mg/l
-            x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
-            y_post_std = np.array([float(self.postEntryValueOne.get()), float(self.postEntryValueTwo.get()), float(self.postEntryValueThree.get())]).reshape((-1,1))
-            print("post mgl works")
-
-        elif self.post.get() == 2: # ml/l
-            x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
-            y_post_std = np.array([self.mll2mgl(float(self.postEntryValueOne.get())), self.mll2mgl(float(self.postEntryValueTwo.get())), self.mll2mgl(float(self.postEntryValueThree.get()))]).reshape((-1,1))
-            print("post ml works")
-
-        elif self.post.get() == 3: # mmol/ml
-            x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
-            y_post_std = np.array([self.mmol2mgl(float(self.postEntryValueOne.get())), self.mmol2mgl(float(self.postEntryValueTwo.get())), self.mmol2mgl(float(self.postEntryValueThree.get()))]).reshape((-1,1))
-            print("post mmol works")
-
-        else:
-            pass
-
-        model_pre = LinearRegression().fit(x_pre, y_pre_std)      # linear regression to get differences in slope/intercept for pre/post calibrations
-        model_post = LinearRegression().fit(x_post,y_post_std)
-
-        return self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), float(model_post.coef_), float(model_post.intercept_)
+            # self.inputMsglabel.place(relx = 0.45 , rely = 0.6)
+            # self.timeMsglabel.place(relx = 0.45, rely  = 0.55)
 
     def applyCal(self, files):   
         pass
