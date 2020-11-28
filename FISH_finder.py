@@ -316,6 +316,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
     def calcLinearReg(self):
         try:
             self.timeMsglabel.place_forget()
+            self.inputMsglabel.place_forget()
             idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
             idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
             idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
@@ -323,8 +324,6 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
             idx_t4 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeOne.get())).abs().idxmin()
             idx_t5 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeTwo.get())).abs().idxmin()
             idx_t6 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeThree.get())).abs().idxmin()
-            print(idx_t1)
-            print(idx_t2)
 
             row1 = df_pre.loc[[idx_t1]]
             row2 = df_pre.loc[[idx_t2]] 
@@ -334,13 +333,14 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
             row5 = df_post.loc[[idx_t5]]
             row6 = df_post.loc[[idx_t6]]
 
-        except: 
+        except Exception: 
             self.timeMsglabel.place(relx = 0.45, rely  = 0.55)
-        # except KeyError:
-        #     self.timeMsglabel.place(relx = 0.45, rely  = 0.55)
+    # except KeyError:
+    #     self.timeMsglabel.place(relx = 0.45, rely  = 0.55)
 
         try:
             self.inputMsglabel.place_forget()
+            self.timeMsglabel.place_forget()
             if self.pre.get() == 1: # mg/l
                 x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
                 y_pre_std = np.array([float(self.preEntryValueOne.get()), float(self.preEntryValueTwo.get()), float(self.preEntryValueThree.get())]).reshape((-1,1))
@@ -353,8 +353,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
                 x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
                 y_pre_std = np.array([self.mmol2mgl(float(self.preEntryValueOne.get())), self.mmol2mgl(float(self.preEntryValueTwo.get())), self.mmol2mgl(float(self.preEntryValueThree.get()))]).reshape((-1,1))
 
-            else:
-                pass
+
         except Exception:
             self.inputMsglabel.place(relx = 0.45 , rely = 0.6)
         # except UnboundLocalError:
@@ -362,6 +361,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         
         try: 
             self.inputMsglabel.place_forget()
+            self.timeMsglabel.place_forget()
             if self.post.get() == 1: # mg/l
                 x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
                 y_post_std = np.array([float(self.postEntryValueOne.get()), float(self.postEntryValueTwo.get()), float(self.postEntryValueThree.get())]).reshape((-1,1))
