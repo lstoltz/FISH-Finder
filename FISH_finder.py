@@ -9,7 +9,9 @@ import csv
 
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
-    fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt"]
+    fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt",
+    "pre_x1", "pre_x2","pre_x3","preStd_y1","preStd_y2","preStd_y3","post_x1","post_x2",
+    "post_x3","postStd_y1","postStd_y2","postStd_y3", "t_pre", "t_post"]
     writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
     writer.writeheader()
     
@@ -298,15 +300,22 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         global calCoef
         loggerValue = self.currentLoggerLabel.get()
         calCoef = self.calcLinearReg()            ## testing, unvover to use
-        # with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
-        #     fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt"]
-        #     writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
-        #     writer.writerow({"logger_sn": calCoef[0], "pre_slope": calCoef[1], "pre_intcpt": calCoef[2], "post_slope": calCoef[3],"post_intcpt": calCoef[4]})
+        with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
+            fieldnames = ["logger_sn","pre_slope","pre_intcpt", "post_slope","post_intcpt",
+            "pre_x1", "pre_x2","pre_x3","preStd_y1","preStd_y2","preStd_y3","post_x1","post_x2",
+            "post_x3","postStd_y1","postStd_y2","postStd_y3", "t_pre", "t_post"]
+            writer = csv.DictWriter(csvfile, fieldnames= fieldnames)
+            writer.writerow({"logger_sn": calCoef[0], "pre_slope": calCoef[1],
+            "pre_intcpt": calCoef[2], "post_slope": calCoef[3],"post_intcpt": calCoef[4],
+            "pre_x1":calCoef[5], "pre_x2":calCoef[6], "pre_x3":calCoef[7], "preStd_y1":calCoef[8],
+            "preStd_y2":calCoef[9], "preStd_y3":calCoef[10], "post_x1":calCoef[11], "post_x2":calCoef[12],
+            "post_x3":calCoef[13], "postStd_y1":calCoef[14], "postStd_y2":calCoef[15], "postStd_y3":calCoef[16],
+            "t_pre":calCoef[17], "t_post":calCoef[18]})
 
         for files in os.listdir(dataSource):
             if fnmatch.fnmatch(files, str(loggerValue)+'*'):
                 print(files) 
-                self.applyCal(files)
+                self.applyCal(os.path.join(dataSource,files), calCoef)
         if calCoef is None:
             pass
         else:
@@ -390,14 +399,28 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         try:
             # self.inputMsglabel.place_forget()
             # self.timeMsglabel.place_forget()
-            return self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), float(model_post.coef_), float(model_post.intercept_)     
+            return (self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), 
+            float(model_post.coef_), float(model_post.intercept_), float(x_pre[0]), float(x_pre[1]), float(x_pre[2]), float(y_pre_std[0]),
+            float(y_pre_std[1]), float(y_pre_std[2]), float(x_post[0]), float(x_post[1]), float(x_post[2]), float(y_post_std[0]),
+            float(y_post_std[1]), float(y_post_std[2]),
+            pd.to_datetime(self.preEntryTimeTwo.get()), pd.to_datetime(self.postEntryTimeTwo.get())) 
+
         except UnboundLocalError:
             pass
             # self.inputMsglabel.place(relx = 0.45 , rely = 0.6)
             # self.timeMsglabel.place(relx = 0.45, rely  = 0.55)
 
-    def applyCal(self, files):   
-        pass
+
+    def applyCal(self, files, coefs):   
+        df = pd.read_csv(files)
+        df['ISO 8601 Time'] = pd.to_datetime(df['ISO 8601 Time'])
+
+        slope_t = coefs[1]*(df['ISO 8601 Time']-coefs[17])*((coefs[3]-coefs[1])/(coefs[18]-coefs[17]))
+        offset_t = coefs[2]*(df['ISO 8601 Time']-coefs[17])*((coefs[4]-coefs[2])/(coefs[18]-coefs[17]))
+
+        df['DOcal_mgl'] = slope_t*df['Dissolved Oxygen (mg/l)']+offset_t
+        df.to_csv(dataSource, index = False, encoding='utf-8-sig', na_rep = 'NaN')  
+        
         # actually apply calibration to calculation
     
     def mmol2mgl(self, mmol):
