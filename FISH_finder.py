@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import csv
+from matplotlib.dates import date2num as date2num
 
 tempThreshold = 10 # Threshold for when to subset temperature (In celcius)
 with open(r'calibration_parms.csv', 'a', newline='') as csvfile:
@@ -247,8 +248,8 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
     def getPreCsv(self): # csv file of pre deployment calibration
         global df_pre
-        import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
-        # import_file_path = filedialog.askopenfilename()
+        # import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
+        import_file_path = filedialog.askopenfilename()
         if import_file_path == "":
             pass
         else:
@@ -259,8 +260,8 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
     
     def getPostCsv(self): # csv file of post deployment calibration
         global df_post
-        import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
-        # import_file_path = filedialog.askopenfilename()
+        # import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
+        import_file_path = filedialog.askopenfilename()
         if import_file_path == "":
             pass
         else:
@@ -415,11 +416,12 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         df = pd.read_csv(files)
         df['ISO 8601 Time'] = pd.to_datetime(df['ISO 8601 Time'])
 
-        slope_t = coefs[1]*(df['ISO 8601 Time']-coefs[17])*((coefs[3]-coefs[1])/(coefs[18]-coefs[17]))
-        offset_t = coefs[2]*(df['ISO 8601 Time']-coefs[17])*((coefs[4]-coefs[2])/(coefs[18]-coefs[17]))
+        slope_t = coefs[1]*(date2num(df['ISO 8601 Time'])-date2num(coefs[17]))*((coefs[3]-coefs[1])/(date2num(coefs[18])-date2num(coefs[17])))
+        offset_t = coefs[2]*(date2num(df['ISO 8601 Time'])-date2num(coefs[17]))*((coefs[4]-coefs[2])/(date2num(coefs[18])-date2num(coefs[17])))
 
         df['DOcal_mgl'] = slope_t*df['Dissolved Oxygen (mg/l)']+offset_t
-        df.to_csv(dataSource, index = False, encoding='utf-8-sig', na_rep = 'NaN')  
+
+        df.to_csv(files, index = False, encoding='utf-8-sig', na_rep = 'NaN')  
         
         # actually apply calibration to calculation
     
