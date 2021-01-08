@@ -177,6 +177,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         self.preEntryTimeLabel.place(relx = 0.35, rely = 0.05)
 
         self.preEntryTimeLabel.place(relx = 0.35, rely = 0.05)
+        
         self.preEntryTimeOne = tk.Entry(master)
         self.preEntryTimeOne.place(relx = 0.35, rely = 0.1)
 
@@ -248,8 +249,8 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
     def getPreCsv(self): # csv file of pre deployment calibration
         global df_pre
-        # import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
-        import_file_path = filedialog.askopenfilename()
+        import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH\Calibration Files\Pre deployment\4-17-20\2002008_cal_DissolvedOxygen.csv" # testing
+        # import_file_path = filedialog.askopenfilename()
         if import_file_path == "":
             pass
         else:
@@ -260,8 +261,8 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
     
     def getPostCsv(self): # csv file of post deployment calibration
         global df_post
-        # import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH dl_files\raw\2002502\WDFW\04-ee-03-73-87-32\2002017_dsa-2020Oct14_131455_DissolvedOxygen.csv" # testing
-        import_file_path = filedialog.askopenfilename()
+        import_file_path = r"C:\Users\lstol\OneDrive\Documents\Oregon State\Research\DDH\Calibration Files\Post deployment\8-14-20\04-ee-03-73-87-73\2002007_sxt-2020Aug14_155246_DissolvedOxygen.csv" # testing
+        # import_file_path = filedialog.askopenfilename()
         if import_file_path == "":
             pass
         else:
@@ -315,7 +316,7 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
         for files in os.listdir(dataSource):
             if fnmatch.fnmatch(files, str(loggerValue)+'*'):
-                print(files) 
+                # print(files) 
                 self.applyCal(os.path.join(dataSource,files), calCoef)
         if calCoef is None:
             pass
@@ -324,16 +325,42 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
 
 
     def calcLinearReg(self):
+        # self.preEntryTimeOne = "2020-04-17T10:27:03"
+        # self.preEntryTimeTwo = "2020-04-17T11:05:03"
+        # self.preEntryTimeThree = "2020-04-17T13:30:03"
+
+        # self.preEntryValueOne = 7.87
+        # self.preEntryValueTwo = 7.57
+        # self.preEntryValueThree = 1.28
+
+        # self.postEntryTimeOne = "2020-08-14T13:12:21"
+        # self.postEntryTimeTwo = "2020-08-14T14:02:21"
+        # self.postEntryTimeThree = "2020-08-14T15:35:21"
+
+        # self.postEntryValueOne = 8.23
+        # self.postEntryValueTwo = 3.05
+        # self.postEntryValueThree = 0.01
+
         try:
             self.timeMsglabel.place_forget()
             self.inputMsglabel.place_forget()
-            idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
-            idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
-            idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
+            # idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeOne.get())).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
+            # idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeTwo.get())).abs().idxmin()
+            # idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime(self.preEntryTimeThree.get())).abs().idxmin()
 
-            idx_t4 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeOne.get())).abs().idxmin()
-            idx_t5 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeTwo.get())).abs().idxmin()
-            idx_t6 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeThree.get())).abs().idxmin()
+            # idx_t4 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeOne.get())).abs().idxmin()
+            # idx_t5 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeTwo.get())).abs().idxmin()
+            # idx_t6 = df_post['ISO 8601 Time'].sub(pd.to_datetime(self.postEntryTimeThree.get())).abs().idxmin()
+
+            idx_t1 = df_pre['ISO 8601 Time'].sub(pd.to_datetime("2020-04-17T10:27:03")).abs().idxmin()   # Finds closes row to time specified during calibration based on known values
+            idx_t2 = df_pre['ISO 8601 Time'].sub(pd.to_datetime("2020-04-17T11:05:03")).abs().idxmin()
+            idx_t3 = df_pre['ISO 8601 Time'].sub(pd.to_datetime("2020-04-17T13:30:03")).abs().idxmin()
+
+            idx_t4 = df_post['ISO 8601 Time'].sub(pd.to_datetime("2020-08-14T13:12:21")).abs().idxmin()
+            idx_t5 = df_post['ISO 8601 Time'].sub(pd.to_datetime("2020-08-14T14:02:21")).abs().idxmin()
+            idx_t6 = df_post['ISO 8601 Time'].sub(pd.to_datetime("2020-08-14T15:35:21")).abs().idxmin()
+
+            
 
             row1 = df_pre.loc[[idx_t1]]
             row2 = df_pre.loc[[idx_t2]] 
@@ -351,9 +378,13 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         try:
             self.inputMsglabel.place_forget()
             self.timeMsglabel.place_forget()
+            # if self.pre.get() == 1: # mg/l    # testing the linear regression calculation
+            #     x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
+            #     y_pre_std = np.array([float(self.preEntryValueOne.get()), float(self.preEntryValueTwo.get()), float(self.preEntryValueThree.get())]).reshape((-1,1))
+
             if self.pre.get() == 1: # mg/l
                 x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
-                y_pre_std = np.array([float(self.preEntryValueOne.get()), float(self.preEntryValueTwo.get()), float(self.preEntryValueThree.get())]).reshape((-1,1))
+                y_pre_std = np.array([float(7.87), float(7.57), float(1.28)]).reshape((-1,1))
 
             elif self.pre.get() == 2: # ml/l
                 x_pre = np.array([row1['Dissolved Oxygen (mg/l)'], row2['Dissolved Oxygen (mg/l)'], row3['Dissolved Oxygen (mg/l)']]).reshape((-1,1))  # puts values into two x/y arrays  
@@ -372,9 +403,13 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         try: 
             self.inputMsglabel.place_forget()
             self.timeMsglabel.place_forget()
+            # if self.post.get() == 1: # mg/l
+            #     x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
+            #     y_post_std = np.array([float(self.postEntryValueOne.get()), float(self.postEntryValueTwo.get()), float(self.postEntryValueThree.get())]).reshape((-1,1))
+
             if self.post.get() == 1: # mg/l
                 x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
-                y_post_std = np.array([float(self.postEntryValueOne.get()), float(self.postEntryValueTwo.get()), float(self.postEntryValueThree.get())]).reshape((-1,1))
+                y_post_std = np.array([float(8.23), float(3.05), float(0.01)]).reshape((-1,1))
 
             elif self.post.get() == 2: # ml/l
                 x_post = np.array([row4['Dissolved Oxygen (mg/l)'], row5['Dissolved Oxygen (mg/l)'], row6['Dissolved Oxygen (mg/l)']]).reshape((-1,1))
@@ -400,11 +435,16 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         try:
             # self.inputMsglabel.place_forget()
             # self.timeMsglabel.place_forget()
+            # return (self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), 
+            # float(model_post.coef_), float(model_post.intercept_), float(x_pre[0]), float(x_pre[1]), float(x_pre[2]), float(y_pre_std[0]),
+            # float(y_pre_std[1]), float(y_pre_std[2]), float(x_post[0]), float(x_post[1]), float(x_post[2]), float(y_post_std[0]),
+            # float(y_post_std[1]), float(y_post_std[2]),
+            # pd.to_datetime(self.preEntryTimeTwo.get()), pd.to_datetime(self.postEntryTimeTwo.get())) 
             return (self.currentLoggerLabel.get(), float(model_pre.coef_) , float(model_pre.intercept_), 
             float(model_post.coef_), float(model_post.intercept_), float(x_pre[0]), float(x_pre[1]), float(x_pre[2]), float(y_pre_std[0]),
             float(y_pre_std[1]), float(y_pre_std[2]), float(x_post[0]), float(x_post[1]), float(x_post[2]), float(y_post_std[0]),
             float(y_post_std[1]), float(y_post_std[2]),
-            pd.to_datetime(self.preEntryTimeTwo.get()), pd.to_datetime(self.postEntryTimeTwo.get())) 
+            pd.to_datetime("2020-04-17T11:05:03"), pd.to_datetime("2020-08-14T14:02:21")) 
 
         except UnboundLocalError:
             pass
@@ -416,9 +456,19 @@ class SecondPage(tk.Frame):  # this page is the work horse that performs the mov
         df = pd.read_csv(files)
         df['ISO 8601 Time'] = pd.to_datetime(df['ISO 8601 Time'])
 
-        slope_t = coefs[1]*(date2num(df['ISO 8601 Time'])-date2num(coefs[17]))*((coefs[3]-coefs[1])/(date2num(coefs[18])-date2num(coefs[17])))
-        offset_t = coefs[2]*(date2num(df['ISO 8601 Time'])-date2num(coefs[17]))*((coefs[4]-coefs[2])/(date2num(coefs[18])-date2num(coefs[17])))
 
+            # writer.writerow({"logger_sn": calCoef[0], "pre_slope": calCoef[1],
+            # "pre_intcpt": calCoef[2], "post_slope": calCoef[3],"post_intcpt": calCoef[4],
+            # "pre_x1":calCoef[5], "pre_x2":calCoef[6], "pre_x3":calCoef[7], "preStd_y1":calCoef[8],
+            # "preStd_y2":calCoef[9], "preStd_y3":calCoef[10], "post_x1":calCoef[11], "post_x2":calCoef[12],
+            # "post_x3":calCoef[13], "postStd_y1":calCoef[14], "postStd_y2":calCoef[15], "postStd_y3":calCoef[16],
+            # "t_pre":calCoef[17], "t_post":calCoef[18]})
+
+        slope_t = (((coefs[1]*(date2num(coefs[17])-date2num(df['ISO 8601 Time']))))*((coefs[3]-coefs[1])/(date2num(coefs[18])-date2num(coefs[17]))))
+
+        offset_t = ((coefs[2]*(date2num(df['ISO 8601 Time'])-date2num(coefs[17])))*((coefs[4]-coefs[2])/(date2num(coefs[18])-date2num(coefs[17]))))
+
+        print(date2num(coefs[18])-date2num(coefs[17]))
         df['DOcal_mgl'] = slope_t*df['Dissolved Oxygen (mg/l)']+offset_t
 
         df.to_csv(files, index = False, encoding='utf-8-sig', na_rep = 'NaN')  
